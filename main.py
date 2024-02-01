@@ -608,15 +608,15 @@ def download_2023_15_minute_report():
     destination = '2023_15_minute_report.csv'
     download_file(dowloadUrl, destination)
 
-download_2023_daily_fronius_button = ttk.Button(root, text='Download_2023_daily', command=download_2023_daily_fronius)
-download_2023_daily_fronius_button.pack()  # Adjust padx as needed
-
-
-download_2022_daily_fronius_button = ttk.Button(root, text='Download_2022_daily', command=download_2022_daily_fronius)
-download_2022_daily_fronius_button.pack()
-
-download_2023_15_minute_report_button = ttk.Button(root, text='Download_2023_15_minute_report', command=download_2023_15_minute_report)
-download_2023_15_minute_report_button.pack()
+# download_2023_daily_fronius_button = ttk.Button(root, text='Download_2023_daily', command=download_2023_daily_fronius)
+# download_2023_daily_fronius_button.pack()  # Adjust padx as needed
+#
+#
+# download_2022_daily_fronius_button = ttk.Button(root, text='Download_2022_daily', command=download_2022_daily_fronius)
+# download_2022_daily_fronius_button.pack()
+#
+# download_2023_15_minute_report_button = ttk.Button(root, text='Download_2023_15_minute_report', command=download_2023_15_minute_report)
+# download_2023_15_minute_report_button.pack()
 
 
 def show_hourly_usage_linechart():
