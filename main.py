@@ -137,8 +137,8 @@ open_button.pack()
 open_button_Fronius_daily = ttk.Button(root, text='Open Fronius report', command=open_file_fronius_daily)
 open_button_Fronius_daily.pack()
 
-open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_15)
-open_button_Fronius_daily_15_minute_button.pack()
+# open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_15)
+# open_button_Fronius_daily_15_minute_button.pack()
 
 
 # def analyze_csv():
@@ -294,7 +294,7 @@ def show_sum():
     bars = plt.bar(labels, values, color=colors)
 
     # startDate = balanced[0].DataOdczytu
-   # endDate = balanced[-1].DataOdczytu
+    # endDate = balanced[-1].DataOdczytu
     startDate = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
     endDate = f"{endDate[:4]}/{endDate[4:6]}/{endDate[6:]}"
     # Add labels and a title
@@ -307,6 +307,78 @@ def show_sum():
 
     print(generated[0].DailySum)
     print(startDate)
+    plt.show()
+
+def show_energy_price():
+    pricePerKwHSpent = Decimal(energy_price_spent_entry.get());
+    pricePerKwHGenerated = Decimal(energy_price_generated_entry.get());
+
+    startDate = start_date_entry.get()
+    # print(startDate)
+    endDate = end_date_entry.get()
+    # print(endDate)
+
+    startDateReached = False
+    balancedSum = 0
+    print(balanced[0].DailySum)
+    for i in balanced:
+        if i.DataOdczytu == startDate:
+            startDateReached = True
+        if startDateReached == True:
+            balancedSum += i.DailySum
+        if endDate == i.DataOdczytu:
+            break
+
+    startDateReached = False
+    generatedSum = 0
+    for i in generated:
+        if i.DataOdczytu == startDate:
+            startDateReached = True
+        if startDateReached == True:
+            generatedSum += i.DailySum
+        if endDate == i.DataOdczytu:
+            break
+
+
+    startDateReached = False
+    spentSum = 0
+    for i in spent:
+        if i.DataOdczytu == startDate:
+            startDateReached = True
+        if startDateReached == True:
+            spentSum += i.DailySum
+        if endDate == i.DataOdczytu:
+            break
+
+    print(balancedSum)
+    print(generatedSum)
+    print(spentSum)
+
+    priceGenerated = generatedSum*pricePerKwHGenerated
+    priceSpent = spentSum*pricePerKwHSpent
+    priceFinal = priceSpent-priceGenerated
+    # print(priceSpent)
+
+    values = [priceFinal, priceGenerated, priceSpent]
+    labels = ['Cena finalna ', 'Cena energi oddanej ', 'Cena energii pobranej ']
+    colors = ['blue', 'green', 'red']
+    # Create a bar chart
+    bars = plt.bar(labels, values, color=colors)
+
+    # startDate = balanced[0].DataOdczytu
+    # endDate = balanced[-1].DataOdczytu
+    startDate = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
+    endDate = f"{endDate[:4]}/{endDate[4:6]}/{endDate[6:]}"
+    # Add labels and a title
+    # plt.xlabel('Categories')
+    plt.ylabel('Values')
+    plt.title('Total energy consumption between ' + startDate + '-' + endDate)
+
+    for bar, value in zip(bars, values):
+        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+
+    # print(generated[0].DailySum)
+    # print(startDate)
     plt.show()
 
 def show_stacks_balanced():
@@ -555,12 +627,12 @@ def show_weather_forecast():
     print(hourly_dataframe)
 
 # Set the login URL and other relevant URLs
-tk.Label(root, text="Login:").pack()
-login_entry = tk.Entry(root)
-login_entry.pack()
-tk.Label(root, text="Password:").pack()
-password_entry = tk.Entry(root, show='*')
-password_entry.pack()
+# tk.Label(root, text="Login:").pack()
+# login_entry = tk.Entry(root)
+# login_entry.pack()
+# tk.Label(root, text="Password:").pack()
+# password_entry = tk.Entry(root, show='*')
+# password_entry.pack()
 
 def download_file(url, destination):
     try:
@@ -574,21 +646,21 @@ def download_file(url, destination):
     except requests.exceptions.RequestException as e:
         print(f"Failed to download file from {url}. Error: {e}")
 
-def login():
-    username = login_entry.get()
-    password = password_entry.get()
-    login_url = 'https://login.fronius.com/'
-    reports_url = 'https://www.solarweb.com/Report/Reports?pvSystemId=097e980e-b07d-4e1f-910e-eb1355d999eb'
-    with requests.Session() as session:
-    # Perform login
-        login_payload = {'username': username, 'password': password}
-        session.post(login_url, data=login_payload)
-        print("Logged in")
-    # Navigate to the reports section
-        reports_page = session.get(reports_url)
-
-    # url = 'https://www.solarweb.com/Report/Reports?pvSystemId=097e980e-b07d-4e1f-910e-eb1355d999eb'
-    url = 'https://www.solarweb.com/Report/Download?reportId=3ca0673a-1d01-4fdb-a3e8-b0bf00cd373c'
+# def login():
+#     username = login_entry.get()
+#     password = password_entry.get()
+#     login_url = 'https://login.fronius.com/'
+#     reports_url = 'https://www.solarweb.com/Report/Reports?pvSystemId=097e980e-b07d-4e1f-910e-eb1355d999eb'
+#     with requests.Session() as session:
+#     # Perform login
+#         login_payload = {'username': username, 'password': password}
+#         session.post(login_url, data=login_payload)
+#         print("Logged in")
+#     # Navigate to the reports section
+#         reports_page = session.get(reports_url)
+#
+#     # url = 'https://www.solarweb.com/Report/Reports?pvSystemId=097e980e-b07d-4e1f-910e-eb1355d999eb'
+#     url = 'https://www.solarweb.com/Report/Download?reportId=3ca0673a-1d01-4fdb-a3e8-b0bf00cd373c'
 
 # login__button = ttk.Button(root,text ='Login', command=login)
 # login__button.pack()
@@ -787,6 +859,16 @@ show_fronius_sum_button.pack()
 
 show_sum_button = ttk.Button(root,text='Show sum', command=show_sum)
 show_sum_button.pack()
+
+tk.Label(root, text="Price per KwH Spent:").pack()
+energy_price_spent_entry = tk.Entry(root)
+energy_price_spent_entry.pack()
+tk.Label(root, text="Price per KwH Generated:").pack()
+energy_price_generated_entry = tk.Entry(root)
+energy_price_generated_entry.pack()
+
+show_energy_price_button = ttk.Button(root,text='Show energy price spent', command=show_energy_price)
+show_energy_price_button.pack()
 
 show_stacks_Fronius_daily_button = ttk.Button(root,text='Show_stacks_Fronius_daily', command=show_stacks_Fronius_daily)
 show_stacks_Fronius_daily_button.pack(padx=70)
