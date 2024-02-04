@@ -579,10 +579,11 @@ def show_weather_history():
     hourly_dataframe = pd.DataFrame(data=hourly_data)
     print(hourly_dataframe)
 
-#Kod przeważnie z dokumentacji
+
 
 def show_weather_forecast():
     lat, lon = get_coord()
+    # Kod przeważnie z dokumentacji
     cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
@@ -713,32 +714,6 @@ def download_file(url, destination):
 
 # login__button = ttk.Button(root,text ='Login', command=login)
 # login__button.pack()
-
-def download_2023_daily_fronius():
-    dowloadUrl = 'https://www.solarweb.com/Report/Download?reportId=ac33e9c1-7bf7-4bbb-8f0a-b0ef010d85d2'
-    destination = '2023_year_report_PV_Production_daily.csv'
-    download_file(dowloadUrl, destination)
-
-def download_2022_daily_fronius():
-    dowloadUrl = 'https://www.solarweb.com/Report/Download?reportId=53d7f4e6-df1b-460f-9183-b0f7001a95b3'
-    destination = '2023_15_minute_report.csv'
-    download_file(dowloadUrl, destination)
-
-def download_2023_15_minute_report():
-    dowloadUrl = 'https://www.solarweb.com/Report/Download?reportId=a8c25c30-382d-4d3b-a7de-b0f700fd1d3d'
-    destination = '2023_15_minute_report.csv'
-    download_file(dowloadUrl, destination)
-
-# download_2023_daily_fronius_button = ttk.Button(root, text='Download_2023_daily', command=download_2023_daily_fronius)
-# download_2023_daily_fronius_button.pack()  # Adjust padx as needed
-#
-#
-# download_2022_daily_fronius_button = ttk.Button(root, text='Download_2022_daily', command=download_2022_daily_fronius)
-# download_2022_daily_fronius_button.pack()
-#
-# download_2023_15_minute_report_button = ttk.Button(root, text='Download_2023_15_minute_report', command=download_2023_15_minute_report)
-# download_2023_15_minute_report_button.pack()
-
 
 def show_hourly_usage_linechart():
     startDate = start_date_entry.get()
@@ -911,19 +886,7 @@ show_stacks_button_spent.pack()
 
 
 
-city_label = ttk.Label(root, text="Enter City: ")
-city_label.pack()
-city_entry = ttk.Entry(root, width=20)
-city_entry.pack()
 
-show_weather_history_button = ttk.Button(root,text='Show_weather_history', command=show_weather_history)
-show_weather_history_button.pack()
-
-show_weather_forecast_button = ttk.Button(root,text='Show_7day_weather_forecast', command=show_weather_forecast)
-show_weather_forecast_button.pack()
-
-show_hourly_usage_linechart_button = ttk.Button(root,text ='Show_hourly_usage_linechart', command=show_hourly_usage_linechart)
-show_hourly_usage_linechart_button.pack()
 
 
 # analyze_button = ttk.Button(root, text='Analyze PGE', command=analyze_csv)
@@ -955,6 +918,20 @@ show_differnce_betweenFronius_and_PGE_daily_button = ttk.Button(root,text='Show_
 show_differnce_betweenFronius_and_PGE_daily_button.pack(padx=70)
 
 display_graph_button = ttk.Button(root, text='Display Graph')
+
+city_label = ttk.Label(root, text="Enter City: ")
+city_label.pack()
+city_entry = ttk.Entry(root, width=20)
+city_entry.pack()
+
+show_weather_history_button = ttk.Button(root,text='Show_weather_history', command=show_weather_history)
+show_weather_history_button.pack()
+
+show_weather_forecast_button = ttk.Button(root,text='Show_7day_weather_forecast', command=show_weather_forecast)
+show_weather_forecast_button.pack()
+
+show_hourly_usage_linechart_button = ttk.Button(root,text ='Show_hourly_usage_linechart', command=show_hourly_usage_linechart)
+show_hourly_usage_linechart_button.pack()
 
 tk.Label(root, text="Enter plant power:").pack()
 plant_power_entry = tk.Entry(root)
