@@ -534,6 +534,7 @@ def show_line_graph():
     plt.show()
 
 def show_weather_history():
+    lat, lon = get_coord()
     startDate = start_date_entry.get()
     endDate = end_date_entry.get()
     start_date = datetime.strptime(start_date_entry.get(), "%Y%m%d").strftime("%Y-%m-%d")
@@ -547,8 +548,8 @@ def show_weather_history():
     # The order of variables in hourly or daily is important to assign them correctly below
     url = "https://archive-api.open-meteo.com/v1/archive"
     params = {
-        "latitude": 52.52,
-        "longitude": 13.41,
+        "latitude": lat,
+        "longitude": lon,
         "start_date": start_date,
         "end_date": end_date,
         "hourly": "temperature_2m"
@@ -577,7 +578,10 @@ def show_weather_history():
     hourly_dataframe = pd.DataFrame(data=hourly_data)
     print(hourly_dataframe)
 
+#Kod przeważnie z dokumentacji
+
 def show_weather_forecast():
+    lat, lon = get_coord()
     cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
@@ -586,8 +590,8 @@ def show_weather_forecast():
     # The order of variables in hourly or daily is important to assign them correctly below
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
-        "latitude": 51.25,
-        "longitude": 22.5667,
+        "latitude": lat,
+        "longitude": lon,
         "daily": ["weather_code", "temperature_2m_max", "temperature_2m_min"],
         "forecast_days": 1
     }
@@ -822,6 +826,24 @@ def show_differnce_betweenFronius_and_PGE_daily():
     print(startDate)
     plt.show()
 
+def get_coord():
+    lat, lon = None, None
+    city = city_entry.get()
+    base_url = "https://nominatim.openstreetmap.org/search"
+    params = {"q": city, "format": "json"}
+
+    response = requests.get(base_url, params=params)
+    data = response.json()
+    if response.status_code == 200 and data:
+        first_result = data[0]
+        lat, lon = float(first_result["lat"]), float(first_result["lon"])
+
+    else:
+        print("Error: Unable to retrieve coordinates.")
+    return lat, lon
+
+
+
 show_line_graph_button = ttk.Button(root,text='Show_line graph', command=show_line_graph)
 show_line_graph_button.pack()
 
@@ -833,6 +855,13 @@ show_stacks_button_generated.pack()
 
 show_stacks_button_spent = ttk.Button(root,text='Show_stacks spent', command=show_stacks_spent)
 show_stacks_button_spent.pack()
+
+
+
+city_label = ttk.Label(root, text="Enter City: ")
+city_label.pack()
+city_entry = ttk.Entry(root, width=20)
+city_entry.pack()
 
 show_weather_history_button = ttk.Button(root,text='Show_weather_history', command=show_weather_history)
 show_weather_history_button.pack()
@@ -900,13 +929,13 @@ def solar_energy_prediction_forecast():
         print("Result Values in WH:", prod1, prod2)
         print("Limit per hour:", message_data['ratelimit']['limit'])
         print("Remaining Rate Limit:", remaining_rate_limit)
-        plt.ylabel('WH')
-        plt.title('Energy prefiction for ' + date1 + '-' + date2)
-        labels = [date1, date2]
-        values = [prod1, prod2]
-        bars = plt.bar(labels,values)
-        for bar, value in zip(bars, values):
-            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+        # plt.ylabel('WH')
+        # plt.title('Energy prefiction for ' + date1 + '-' + date2)
+        # labels = [date1, date2]
+        # values = [prod1, prod2]
+        # bars = plt.bar(labels,values)
+        # for bar, value in zip(bars, values):
+        #     plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
         # plt.show()
         # subwindow = tk.Toplevel(root)
         # subwindow.title("Weather data")
