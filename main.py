@@ -68,11 +68,11 @@ root.title("Consumption Visualizer")
 # label = tk.Label(text="Consumption Visualizer")
 # label.pack()
 
-enter_start_date_label = tk.Label(root, text='Enter start date')
+enter_start_date_label = tk.Label(root, text='Enter start date YYYYMMDD')
 enter_start_date_label.pack()
 start_date_entry = Entry(root)
 start_date_entry.pack()
-enter_end_date_label = tk.Label(root, text='Enter end date')
+enter_end_date_label = tk.Label(root, text='Enter end date YYYYMMDD')
 enter_end_date_label.pack()
 end_date_entry = tk.Entry(root)
 end_date_entry.pack()
@@ -244,12 +244,6 @@ def show_sum():
     print(startDate)
     endDate = end_date_entry.get()
     print(endDate)
-    # startDatePosition = 0
-    # for i in balanced:
-    #     if i.DataOdczytu == startDate:
-    #         break
-    #     else:
-    #         startDatePosition +=1
 
     startDateReached = False
     balancedSum = 0
@@ -310,8 +304,8 @@ def show_sum():
     plt.show()
 
 def show_energy_price():
-    pricePerKwHSpent = Decimal(energy_price_spent_entry.get());
-    pricePerKwHGenerated = Decimal(energy_price_generated_entry.get());
+    pricePerKwHSpent = Decimal(energy_price_spent_entry.get())
+    pricePerKwHGenerated = Decimal(energy_price_generated_entry.get())
 
     startDate = start_date_entry.get()
     # print(startDate)
@@ -594,37 +588,36 @@ def show_weather_forecast():
     params = {
         "latitude": 51.25,
         "longitude": 22.5667,
-        "hourly": ["temperature_2m", "rain", "showers", "snowfall"]
+        "daily": ["weather_code", "temperature_2m_max", "temperature_2m_min"],
+        "forecast_days": 1
     }
     responses = openmeteo.weather_api(url, params=params)
 
     # Process first location. Add a for-loop for multiple locations or weather models
     response = responses[0]
-    print(f"Coordinates {response.Latitude()}°E {response.Longitude()}°N")
-    print(f"Elevation {response.Elevation()} m asl")
-    print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
-    print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
+    # print(f"Coordinates {response.Latitude()}°E {response.Longitude()}°N")
+    # print(f"Elevation {response.Elevation()} m asl")
+    # print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
+    # print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
-    # Process hourly data. The order of variables needs to be the same as requested.
-    hourly = response.Hourly()
-    hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
-    hourly_rain = hourly.Variables(1).ValuesAsNumpy()
-    hourly_showers = hourly.Variables(2).ValuesAsNumpy()
-    hourly_snowfall = hourly.Variables(3).ValuesAsNumpy()
+    # Process daily data. The order of variables needs to be the same as requested.
+    daily = response.Daily()
+    daily_weather_code = daily.Variables(0).ValuesAsNumpy()
+    daily_temperature_2m_max = daily.Variables(1).ValuesAsNumpy()
+    daily_temperature_2m_min = daily.Variables(2).ValuesAsNumpy()
 
-    hourly_data = {"date": pd.date_range(
-        start=pd.to_datetime(hourly.Time(), unit="s"),
-        end=pd.to_datetime(hourly.TimeEnd(), unit="s"),
-        freq=pd.Timedelta(seconds=hourly.Interval()),
+    daily_data = {"date": pd.date_range(
+        start=pd.to_datetime(daily.Time(), unit="s"),
+        end=pd.to_datetime(daily.TimeEnd(), unit="s"),
+        freq=pd.Timedelta(seconds=daily.Interval()),
         inclusive="left"
     )}
-    hourly_data["temperature_2m"] = hourly_temperature_2m
-    hourly_data["rain"] = hourly_rain
-    hourly_data["showers"] = hourly_showers
-    hourly_data["snowfall"] = hourly_snowfall
+    daily_data["weather_code"] = daily_weather_code
+    daily_data["temperature_2m_max"] = daily_temperature_2m_max
+    daily_data["temperature_2m_min"] = daily_temperature_2m_min
 
-    hourly_dataframe = pd.DataFrame(data=hourly_data)
-    print(hourly_dataframe)
+    daily_dataframe = pd.DataFrame(data=daily_data)
+    print(daily_dataframe)
 
 # Set the login URL and other relevant URLs
 # tk.Label(root, text="Login:").pack()
@@ -881,14 +874,58 @@ show_differnce_betweenFronius_and_PGE_daily_button.pack(padx=70)
 
 display_graph_button = ttk.Button(root, text='Display Graph')
 
+tk.Label(root, text="Enter plant power:").pack()
+plant_power_entry = tk.Entry(root)
+plant_power_entry.pack()
 
+def solar_energy_prediction_forecast():
+    plant_power = plant_power_entry.get()
+    url = "https://api.forecast.solar/estimate/watthours/day/51.24/22.56/0/0/"+plant_power
+    response = requests.get(url)
+    #Pokazuje przewidywaną generację energii
+    if response.status_code == 200:
+        # Parse the JSON response
+        api_data = response.json()
+        result_data = api_data['result']
+        message_data = api_data['message']
+
+        # print(result_data)
+        result_dates = list(result_data.keys())
+        result_values = list(result_data.values())
+        remaining_rate_limit = message_data['ratelimit']['remaining']
+        # result_dates = str(result_dates).replace('[', '').replace(']', '')
+        date1, date2 = result_dates
+        print("Result Dates: ", date1, date2)
+        prod1, prod2 = result_values
+        print("Result Values in WH:", prod1, prod2)
+        print("Limit per hour:", message_data['ratelimit']['limit'])
+        print("Remaining Rate Limit:", remaining_rate_limit)
+        plt.ylabel('WH')
+        plt.title('Energy prefiction for ' + date1 + '-' + date2)
+        labels = [date1, date2]
+        values = [prod1, prod2]
+        bars = plt.bar(labels,values)
+        for bar, value in zip(bars, values):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+        # plt.show()
+        # subwindow = tk.Toplevel(root)
+        # subwindow.title("Weather data")
+        t = "Predicted energy output on" + date1 + " : " + str(prod1) + "and on " + date2 + " : " + str(prod2)
+        ttk.Label(root, text=t).pack()
+        # label.pack(padx=20, pady=20)
+        # subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
+        # print(api_data)
+    else:
+        print(f"Error: {response.status_code} - {response.text}")
+
+
+solar_energy_prediction_forecast_button = ttk.Button(root, text='Solar energy prediction forecast', command=solar_energy_prediction_forecast)
+solar_energy_prediction_forecast_button.pack()
 
 # L1 = Label(root, text="Enter Date")
 # L1.pack()
 # dateEntry = Entry(root)
 # dateEntry.pack()
-
-
 
 numColKierunek = 2
 numColDataOdczytu = 1
