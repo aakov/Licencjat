@@ -1,4 +1,5 @@
 import csv
+import math
 from calendar import Calendar
 from tkinter import *
 from tkinter import filedialog, ttk
@@ -593,7 +594,53 @@ def show_weather_forecast():
         "latitude": lat,
         "longitude": lon,
         "daily": ["weather_code", "temperature_2m_max", "temperature_2m_min"],
-        "forecast_days": 1
+        "timezone": "auto",
+	    "forecast_days": 6
+    }
+    responses = openmeteo.weather_api(url, params=params)
+
+    # Process first location. Add a for-loop for multiple locations or weather models
+    response = responses[0]
+    print(f"Coordinates {response.Latitude()}°E {response.Longitude()}°N")
+    # print(f"Elevation {response.Elevation()} m asl")
+    # print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
+    # print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
+
+    # Process daily data. The order of variables needs to be the same as requested.
+    daily = response.Daily()
+    daily_weather_code = daily.Variables(0).ValuesAsNumpy()
+    daily_temperature_2m_max = daily.Variables(1).ValuesAsNumpy()
+    daily_temperature_2m_min = daily.Variables(2).ValuesAsNumpy()
+
+    daily_data = {"date": pd.date_range(
+        start=pd.to_datetime(daily.Time(), unit="s"),
+        end=pd.to_datetime(daily.TimeEnd(), unit="s"),
+        freq=pd.Timedelta(seconds=daily.Interval()),
+        inclusive="left"
+    )}
+    daily_data["weather_code"] = daily_weather_code
+    daily_data["temperature_2m_max"] = daily_temperature_2m_max
+    daily_data["temperature_2m_min"] = daily_temperature_2m_min
+    # print(str(daily_temperature_2m_min[1]) + " " + str(daily_temperature_2m_max[1]))
+    daily_dataframe = pd.DataFrame(data=daily_data)
+    print(daily_dataframe)
+
+
+def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
+    lat, lon = get_coord()
+    cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
+    retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+    openmeteo = openmeteo_requests.Client(session=retry_session)
+
+    # Make sure all required weather variables are listed here
+    # The order of variables in hourly or daily is important to assign them correctly below
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "daily": ["weather_code", "temperature_2m_max", "temperature_2m_min"],
+        "timezone": "auto",
+        "forecast_days": 3
     }
     responses = openmeteo.weather_api(url, params=params)
 
@@ -619,9 +666,14 @@ def show_weather_forecast():
     daily_data["weather_code"] = daily_weather_code
     daily_data["temperature_2m_max"] = daily_temperature_2m_max
     daily_data["temperature_2m_min"] = daily_temperature_2m_min
-
     daily_dataframe = pd.DataFrame(data=daily_data)
-    print(daily_dataframe)
+    day1TempMin = math.ceil(daily_temperature_2m_min[1])
+    day1TempMax = math.ceil(daily_temperature_2m_max[1])
+    day2TempMin = math.ceil(daily_temperature_2m_min[2])
+    day2TempMax = math.ceil(daily_temperature_2m_max[2])
+    print(str(day1TempMin) + " " + str(daily_temperature_2m_max[1]))
+    t = "Weather on " + str(date1)+ " " + str(day1TempMin) + "C to " + str(day1TempMax) + "C " + "and on " + str(date2) + str(day2TempMin) + "C to" + str(day2TempMax) + "C "
+    label = ttk.Label(subwindow, text=t).pack()
 
 # Set the login URL and other relevant URLs
 # tk.Label(root, text="Login:").pack()
@@ -831,16 +883,17 @@ def get_coord():
     city = city_entry.get()
     base_url = "https://nominatim.openstreetmap.org/search"
     params = {"q": city, "format": "json"}
-
-    response = requests.get(base_url, params=params)
-    data = response.json()
-    if response.status_code == 200 and data:
-        first_result = data[0]
-        lat, lon = float(first_result["lat"]), float(first_result["lon"])
-
-    else:
-        print("Error: Unable to retrieve coordinates.")
-    return lat, lon
+    try:
+        response = requests.get(base_url, params=params)
+        data = response.json()
+        if response.status_code == 200 and data:
+            first_result = data[0]
+            lat, lon = float(first_result["lat"]), float(first_result["lon"])
+        else:
+            print("Error: Unable to retrieve coordinates enter the name of the city again.")
+        return lat, lon
+    except Exception as e:
+        print(e)
 
 
 
@@ -908,8 +961,9 @@ plant_power_entry = tk.Entry(root)
 plant_power_entry.pack()
 
 def solar_energy_prediction_forecast():
+    lat, lon = get_coord()
     plant_power = plant_power_entry.get()
-    url = "https://api.forecast.solar/estimate/watthours/day/51.24/22.56/0/0/"+plant_power
+    url = "https://api.forecast.solar/estimate/watthours/day/"+ str(lat) + "/"+ str(lon) +"/0/0/"+plant_power
     response = requests.get(url)
     #Pokazuje przewidywaną generację energii
     if response.status_code == 200:
@@ -937,12 +991,20 @@ def solar_energy_prediction_forecast():
         # for bar, value in zip(bars, values):
         #     plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
         # plt.show()
-        # subwindow = tk.Toplevel(root)
-        # subwindow.title("Weather data")
-        t = "Predicted energy output on" + date1 + " : " + str(prod1) + "and on " + date2 + " : " + str(prod2)
-        ttk.Label(root, text=t).pack()
-        # label.pack(padx=20, pady=20)
-        # subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
+        subwindow = tk.Toplevel(root)
+        subwindow.title("Weather data")
+        t = "Predicted energy output on " + date1 + " : " + str(prod1) + " and on " + date2 + " : " + str(prod2)
+        label = ttk.Label(subwindow, text=t)
+        label.pack(padx=20, pady=20)
+        show_weather_forecast_for_energy_prediction_days(subwindow,date1,date2)
+        limitText = "Limit per hour:" + str(message_data['ratelimit']['limit'])
+        labelLimit = ttk.Label(subwindow, text=limitText)
+        labelLimit.pack()
+        remainingText = "Remaining Rate Limit: " + str(remaining_rate_limit)
+        labelRemaining = ttk.Label(subwindow, text=remainingText)
+        labelRemaining.pack()
+        subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
+
         # print(api_data)
     else:
         print(f"Error: {response.status_code} - {response.text}")
