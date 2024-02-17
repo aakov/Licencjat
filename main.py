@@ -64,7 +64,7 @@ froniusMinute_usagelist.append(froniusMinute)
 froniusMinute_usagelist.clear()
 
 root = tk.Tk()
-root.geometry("1200x900")
+root.geometry("1500x1000")
 root.title("Consumption Visualizer")
 # label = tk.Label(text="Consumption Visualizer")
 # label.pack()
@@ -888,6 +888,11 @@ show_stacks_button_generated.pack()
 
 show_stacks_button_spent = ttk.Button(root,text='Show_stacks spent', command=show_stacks_spent)
 show_stacks_button_spent.pack()
+
+
+
+
+
 
 # analyze_button = ttk.Button(root, text='Analyze PGE', command=analyze_csv)
 # analyze_button.config(state=DISABLED)
