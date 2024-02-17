@@ -62,7 +62,7 @@ froniusMinute_usagelist = []
 froniusMinute = FroniusMinute('01.01.2023', 0.0, listEmpty)
 froniusMinute_usagelist.append(froniusMinute)
 froniusMinute_usagelist.clear()
-sf s 
+
 root = tk.Tk()
 root.geometry("1200x900")
 root.title("Consumption Visualizer")
