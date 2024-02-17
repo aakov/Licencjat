@@ -8,7 +8,6 @@ import requests
 import getpass
 from datetime import datetime
 
-
 import requests_cache
 import pandas as pd
 from retry_requests import retry
@@ -33,9 +32,10 @@ class FroniusDaily:
 
 class FroniusMinute:
     def __init__(self, DataOdczytu, Daily_generated,HourUsageList):
-        self.DataOdczytu = DataOdczytu
+        self.DataOdczytu = DataOdczytu #YYYYMMDD
         self.Daily_generated = Daily_generated
         self.HourUsageList = HourUsageList
+        self.Daily_generatedKWh = Daily_generated/1000
 
 
 listEmpty = []
@@ -113,7 +113,7 @@ def open_file():
     with open(filename) as input:
         csv_reader = csv.reader(input, delimiter=';')
         line_count = 0
-        parse_and_export_to_lists(csv_reader,line_count)
+        parse_and_export_to_lists(csv_reader, line_count)
     # analyze_button.config(state=tk.DISABLED)
     #analyze_button.config(state=tk.NORMAL)
 
@@ -129,7 +129,9 @@ def open_file_fronius_15():
     with open(filename) as input:
         csv_reader = csv.reader(input, delimiter=',')
         line_count = 0
-        # parse_Fronius_15(csv_reader, line_count)
+        parse_Fronius_15(csv_reader, line_count)
+        # for instance in froniusMinute_usagelist:
+        #     print(instance.DataOdczytu, instance.Daily_generated, instance.HourUsageList)
 
 
 open_button = ttk.Button(root, text='Open PGE report', command=open_file)
@@ -138,8 +140,8 @@ open_button.pack()
 open_button_Fronius_daily = ttk.Button(root, text='Open Fronius report', command=open_file_fronius_daily)
 open_button_Fronius_daily.pack()
 
-# open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_15)
-# open_button_Fronius_daily_15_minute_button.pack()
+open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_15)
+open_button_Fronius_daily_15_minute_button.pack()
 
 
 # def analyze_csv():
@@ -213,31 +215,34 @@ def parse_Fronius(csv_reader,line_count):
             fronius_day = FroniusDaily(row[0], decimal_daily_energy_generation_fronius)
             froniusDaily_usagelist.append(fronius_day)
 
-# def parse_Fronius_15(csv_reader,line_count):
-#     global froniusMinute_usagelist
-#     hourly_sum = 0
-#     prev_hour = 0
-#     prev_day = ''
-#     hour_usage_list = []
-#     minute_usage_list = []
-#     for row in csv_reader:
-#         if line_count == 0 or line_count == 1:
-#             print(row)
-#             line_count +=1
-#         else:
-#             whPower = row[1]
-#             froniusDate = row[0]
-#             date_object = datetime.strptime(froniusDate, "%d.%m.%Y %H:%M")
-#             # Extract the hour from the datetime object
-#             hour = date_object.hour
-#             date_without_hour = date_object.strftime("%d.%m.%Y")
-#             if line_count == 2:
-#                 prev_hour = hour
-#                 prev_day
-#                 hourly_sum += whPower
-#                 minute_usage_list.append(whPower)
-#                 continue
-#             if prev_hour ==
+def parse_Fronius_15(csv_reader,line_count):
+    global froniusMinute_usagelist
+    hourly_sum = 0
+    prev_hour = 0
+    prev_day = ''
+    hour_usage_list = []
+    minute_usage_list = []
+    fronius_minutes_dict = {}
+    daily_data = {}
+    for row in csv_reader:
+        if line_count == 0 or line_count == 1:
+            print(row)
+            line_count +=1
+        else:
+            date_str, energy_str = row[0], row[1]
+            date_time = datetime.strptime(date_str, '%d.%m.%Y %H:%M')
+            date = date_time.date()
+            energy = Decimal(energy_str) if energy_str.replace('.', '', 1).isdigit() else Decimal(0.0)
+            if date not in daily_data:
+                daily_data[date] = {'total_energy': Decimal(0), 'hourly_energy': [0] * 24}
+            # Add energy production to total for the day
+            daily_data[date]['total_energy'] += energy
+             # Add energy production to appropriate hourly slot
+            hour_index = date_time.hour
+            daily_data[date]['hourly_energy'][hour_index] += energy
+    for date, data in daily_data.items():
+        instance = FroniusMinute(date, data['total_energy'], data['hourly_energy'])
+        froniusMinute_usagelist.append(instance)
 
 
 def show_sum():
