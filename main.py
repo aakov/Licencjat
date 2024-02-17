@@ -11,6 +11,7 @@ from datetime import datetime
 import requests_cache
 import pandas as pd
 from retry_requests import retry
+from matplotlib.ticker import FormatStrFormatter
 
 from tkcalendar import *
 import tkinter as tk
@@ -742,16 +743,22 @@ def show_hourly_usage_linechart():
             break
     print(picked_day_balanced.DataOdczytu)
     print(picked_day_balanced.HourUsageList)
-    plt.plot(labels, picked_day_balanced.HourUsageList)
-    plt.plot(labels, picked_day_generated.HourUsageList)
-    plt.plot(labels, picked_day_spent.HourUsageList)
+    formatted_date = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
+    plt.plot(labels, picked_day_balanced.HourUsageList, label='Balanced')
+    plt.plot(labels, picked_day_generated.HourUsageList, label='Generated')
+    plt.plot(labels, picked_day_spent.HourUsageList, label='Spent')
+    plt.xlabel('Hour')
+    plt.ylabel('KWH')
+    plt.legend()
+    plt.title('Hourly usage on ' + str(formatted_date))
+    plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     plt.show()
 
 def show_fronius_sum():
     start_date = datetime.strptime(start_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
     end_date = datetime.strptime(end_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
-    print(start_date)
-    print(end_date)
+    # print(start_date)
+    # print(end_date)
     sum_fronius = 0
     startDateReached = False
     for i in froniusDaily_usagelist:
@@ -763,7 +770,11 @@ def show_fronius_sum():
             break
     # for i in froniusDaily_usagelist:
     #     sum_fronius += i.Daily_generated
-    print(sum_fronius)
+    subwindow = tk.Toplevel(root)
+    subwindow.title("Ammount of energy generated during the given time period")
+    labelRemaining = ttk.Label(subwindow, text='Ammount of energy generated during the given time period : ' + str(sum_fronius))
+    labelRemaining.pack()
+    subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
 
 def show_stacks_Fronius_daily():
     start_date = datetime.strptime(start_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
