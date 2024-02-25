@@ -144,34 +144,59 @@ open_button_Fronius_daily.pack()
 open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_15)
 open_button_Fronius_daily_15_minute_button.pack()
 
+def analyze_day():
+    subwindow = tk.Toplevel(root)
+    labelRemaining = ttk.Label(subwindow, text='Choose a date')
+    labelRemaining.pack()
+    cal = Calendar(subwindow, selectmode='day', year=2023, month=2, day=22)
+    cal.pack()
+    date = cal.get_date()
 
-# def analyze_csv():
-#     with open(filename) as input:
-#         csv_reader = csv.reader(input, delimiter=';')
-#         line_count = 0
-#         parse_and_export_to_lists(csv_reader,line_count)
-#     # analyze_button.config(state=tk.DISABLED)
-#
-#     # values = [balancedSum, generatedSum, spentSum]
-#     # labels = ['En. Czynna zbilansowana', 'En.Czynna Oddana', 'En.Czynna Pobrana']
-#     # colors = ['blue', 'green', 'red']
-#     # # Create a bar chart
-#     # bars = plt.bar(labels, values, color=colors)
-#     #
-#     # startDate = balanced[0].DataOdczytu
-#     # endDate = balanced[-1].DataOdczytu
-#     # startDate = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
-#     # endDate = f"{endDate[:4]}/{endDate[4:6]}/{endDate[6:]}"
-#     # # Add labels and a title
-#     # # plt.xlabel('Categories')
-#     # plt.ylabel('Values')
-#     # plt.title('Total energy consumption between ' + startDate + '-' + endDate)
-#     #
-#     # for bar, value in zip(bars, values):
-#     #     plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
-#     #
-#     # print(generated[0].DailySum)
-#     # print(generated[0].DataOdczytu)
+    def show_hourly_usage_linechart_day():
+        print(balanced[0].DataOdczytu)
+        print(balanced[0].HourUsageList)
+        date = cal.get_date()
+        startDate = datetime.strptime(date, "%m/%d/%y")
+        startDate = startDate.strftime("%Y%m%d")
+        print(startDate)
+        picked_day_balanced = day
+        picked_day_generated = day
+        picked_day_spent = day
+        labels = list(range(0, 24))
+        # print(labels)
+
+        for i in balanced:
+            if i.DataOdczytu == startDate:
+                picked_day_balanced = i
+                break
+        for i in generated:
+            if i.DataOdczytu == startDate:
+                picked_day_generated = i
+                break
+        for i in spent:
+            if i.DataOdczytu == startDate:
+                picked_day_spent = i
+                break
+        print(picked_day_balanced.DataOdczytu)
+        print(picked_day_balanced.HourUsageList)
+        formatted_date = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
+        plt.plot(labels, picked_day_balanced.HourUsageList, label='Balanced')
+        plt.plot(labels, picked_day_generated.HourUsageList, label='Generated')
+        plt.plot(labels, picked_day_spent.HourUsageList, label='Spent')
+        plt.xlabel('Hour')
+        plt.ylabel('KWH')
+        plt.legend()
+        plt.title('Hourly usage on ' + str(formatted_date))
+        plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+        plt.show()
+
+    open_button_show_hourly_usage_linechart_day = ttk.Button(subwindow, text='show_hourly_usage_linechart_day', command=show_hourly_usage_linechart_day)
+    open_button_show_hourly_usage_linechart_day.pack()
+    subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
+
+analyze_day_button = ttk.Button(root, text='Analyze day', command=analyze_day)
+analyze_day_button.pack()
+
 
 def parse_and_export_to_lists(csv_reader, line_count):
     global balanced, generated, spent
@@ -245,7 +270,6 @@ def parse_Fronius_15(csv_reader,line_count):
         instance = FroniusMinute(date, data['total_energy'], data['hourly_energy'])
         froniusMinute_usagelist.append(instance)
 
-
 def show_sum():
     startDate = start_date_entry.get()
     print(startDate)
@@ -293,9 +317,6 @@ def show_sum():
     colors = ['blue', 'green', 'red']
     # Create a bar chart
     bars = plt.bar(labels, values, color=colors)
-
-    # startDate = balanced[0].DataOdczytu
-    # endDate = balanced[-1].DataOdczytu
     startDate = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
     endDate = f"{endDate[:4]}/{endDate[4:6]}/{endDate[6:]}"
     # Add labels and a title
