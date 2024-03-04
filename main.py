@@ -2,12 +2,13 @@ import csv
 import math
 from calendar import Calendar
 from tkinter import *
-from tkinter import filedialog, ttk
+from tkinter import filedialog, ttk, messagebox
 import openmeteo_requests
 import requests
 import getpass
 from datetime import datetime
-
+from PIL import Image, ImageTk
+import PIL
 import requests_cache
 import pandas as pd
 from retry_requests import retry
@@ -18,6 +19,8 @@ import tkinter as tk
 import matplotlib.pyplot as plt
 from decimal import Decimal
 import numpy as np
+
+
 class Day:
     def __init__(self, KodPP, DataOdczytu, Kierunek, HourUsageList):
         self.KodPP = KodPP
@@ -65,10 +68,22 @@ froniusMinute_usagelist.append(froniusMinute)
 froniusMinute_usagelist.clear()
 
 root = tk.Tk()
-root.geometry("1500x1000")
+root.geometry("800x800")
 root.title("Consumption Visualizer")
 # label = tk.Label(text="Consumption Visualizer")
 # label.pack()
+
+
+
+
+bg_image = Image.open("bg_pv_hd.jpg")
+bg_photo = ImageTk.PhotoImage(bg_image)
+
+bg_label = tk.Label(root, image=bg_photo)
+bg_label.place(x = 0, y =0)
+
+frame1 = Frame(root)
+frame1.pack(pady = 20)
 
 enter_start_date_label = tk.Label(root, text='Enter start date YYYYMMDD')
 enter_start_date_label.pack()
@@ -124,15 +139,16 @@ def open_file_fronius_daily():
         csv_reader = csv.reader(input, delimiter=',')
         line_count = 0
         parse_Fronius(csv_reader, line_count)
-
-def open_file_fronius_15():
+        for instance in froniusDaily_usagelist:
+            print(instance.DataOdczytu)
+def open_file_fronius_5():
     filename = filedialog.askopenfilename()
     with open(filename) as input:
         csv_reader = csv.reader(input, delimiter=',')
         line_count = 0
-        parse_Fronius_15(csv_reader, line_count)
-        # for instance in froniusMinute_usagelist:
-        #     print(instance.DataOdczytu, instance.Daily_generated, instance.HourUsageList)
+        parse_Fronius_5(csv_reader, line_count)
+        for instance in froniusMinute_usagelist:
+            print(instance.DataOdczytu)
 
 
 open_button = ttk.Button(root, text='Open PGE report', command=open_file)
@@ -141,8 +157,16 @@ open_button.pack()
 open_button_Fronius_daily = ttk.Button(root, text='Open Fronius report', command=open_file_fronius_daily)
 open_button_Fronius_daily.pack()
 
-open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_15)
+open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_5)
 open_button_Fronius_daily_15_minute_button.pack()
+
+# Function to find objects by parameter
+def find_by_date(objects_list, date):
+    for obj in objects_list:
+        if obj.DataOdczytu == date:
+            return obj
+    # messagebox.showerror("Error", "No objects found with date '{}'".format(date))
+    return None
 
 def analyze_day():
     subwindow = tk.Toplevel(root)
@@ -190,13 +214,106 @@ def analyze_day():
         plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         plt.show()
 
-    open_button_show_hourly_usage_linechart_day = ttk.Button(subwindow, text='show_hourly_usage_linechart_day', command=show_hourly_usage_linechart_day)
+    def show_fronius_hourly():
+        date = datetime.strptime(cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+        print(date)
+        # end_date = datetime.strptime(end_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
+        day = find_by_date(froniusMinute_usagelist, date)
+        if day == None:
+            messagebox.showerror("Error No objects found with date ", date)
+        else:
+            labels = list(range(0, 24))
+            plt.plot(labels, day.HourUsageList, label='Produced Fronius')
+            plt.xlabel('Hour')
+            plt.ylabel('WH')
+            plt.legend()
+            plt.title('Hourly usage on ' + str(date))
+            plt.show()
+
+    def show_weather_temp():
+        show_weather_hourly_1day(date)
+
+
+    open_button_show_hourly_usage_linechart_day = ttk.Button(subwindow, text='Show_hourly_usage_linechart_day', command=show_hourly_usage_linechart_day)
     open_button_show_hourly_usage_linechart_day.pack()
+    show_fronius_hourly_button = ttk.Button(subwindow, text='Show_fronius_linechart_hourly_button', command=show_fronius_hourly)
+    show_fronius_hourly_button.pack()
+    show_weather_temp_button = ttk.Button(subwindow, text='show_weather_temp', command=show_weather_temp)
+    show_weather_temp_button.pack()
     subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
 
 analyze_day_button = ttk.Button(root, text='Analyze day', command=analyze_day)
 analyze_day_button.pack()
 
+def show_weather_hourly_1day(date):
+    date = datetime.strptime(date, "%m/%d/%y").strftime("%Y-%m-%d")
+    cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
+    retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+    openmeteo = openmeteo_requests.Client(session=retry_session)
+
+    # Make sure all required weather variables are listed here
+    # The order of variables in hourly or daily is important to assign them correctly below
+    url = "https://archive-api.open-meteo.com/v1/archive"
+    params = {
+        "latitude": 51.25,
+        "longitude": 22.5667,
+        "start_date": date,
+        "end_date": date,
+        "hourly": "temperature_2m",
+        "daily": "sunshine_duration",
+        "timezone": "Europe/Berlin"
+    }
+    responses = openmeteo.weather_api(url, params=params)
+
+    # Process first location. Add a for-loop for multiple locations or weather models
+    response = responses[0]
+    # print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
+    # print(f"Elevation {response.Elevation()} m asl")
+    # print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
+    # print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
+
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
+
+    hourly_data = {"date": pd.date_range(
+        start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
+        end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
+        freq=pd.Timedelta(seconds=hourly.Interval()),
+        inclusive="left"
+    )}
+
+    hourly_data["temperature_2m"] = hourly_temperature_2m
+    hourly_dataframe = pd.DataFrame(data=hourly_data)
+    # print(hourly_dataframe)
+    # print(hourly_temperature_2m)
+    # Process daily data. The order of variables needs to be the same as requested.
+    daily = response.Daily()
+    daily_sunshine_duration = daily.Variables(0).ValuesAsNumpy()
+
+    daily_data = {"date": pd.date_range(
+        start=pd.to_datetime(daily.Time(), unit="s", utc=True),
+        end=pd.to_datetime(daily.TimeEnd(), unit="s", utc=True),
+        freq=pd.Timedelta(seconds=daily.Interval()),
+        inclusive="left"
+    )}
+    daily_data["sunshine_duration"] = daily_sunshine_duration
+    labels = list(range(0, 24))
+    plt.plot(labels, hourly_temperature_2m, label='Produced')
+    plt.xlabel('Hour')
+    plt.ylabel('°C')
+    plt.legend()
+    plt.title('Hourly usage on ' + str(date))
+    # plt.show()
+    plt.figure(figsize=(10, 6))
+    rounded_temp = [round(num) for num in hourly_temperature_2m]
+    bars = plt.bar(labels, rounded_temp, alpha=0.7, color='blue')
+    for bar, value in zip(bars, rounded_temp):
+        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+    # Show the plot
+    plt.show()
+    daily_dataframe = pd.DataFrame(data=daily_data)
+    # print(daily_dataframe)
 
 def parse_and_export_to_lists(csv_reader, line_count):
     global balanced, generated, spent
@@ -241,7 +358,7 @@ def parse_Fronius(csv_reader,line_count):
             fronius_day = FroniusDaily(row[0], decimal_daily_energy_generation_fronius)
             froniusDaily_usagelist.append(fronius_day)
 
-def parse_Fronius_15(csv_reader,line_count):
+def parse_Fronius_5(csv_reader, line_count):
     global froniusMinute_usagelist
     hourly_sum = 0
     prev_hour = 0
@@ -267,7 +384,8 @@ def parse_Fronius_15(csv_reader,line_count):
             hour_index = date_time.hour
             daily_data[date]['hourly_energy'][hour_index] += energy
     for date, data in daily_data.items():
-        instance = FroniusMinute(date, data['total_energy'], data['hourly_energy'])
+        formated_date = date.strftime("%d.%m.%Y")
+        instance = FroniusMinute(formated_date, data['total_energy'], data['hourly_energy'])
         froniusMinute_usagelist.append(instance)
 
 def show_sum():
@@ -606,6 +724,107 @@ def show_weather_history():
     hourly_dataframe = pd.DataFrame(data=hourly_data)
     print(hourly_dataframe)
 
+def interpret_weather_code(code):
+    # Dokumentacja wzięta z OpenMeteo
+    weather_interpretation = {
+        "0": "Clear sky",
+        "1": "Mainly clear",
+        "2": "Partly cloudy",
+        "3": "Overcast",
+        "45": "Fog",
+        "48": "Depositing rime fog",
+        "51": "Drizzle: Light intensity",
+        "53": "Drizzle: Moderate intensity",
+        "55": "Drizzle: Dense intensity",
+        "56": "Freezing Drizzle: Light intensity",
+        "57": "Freezing Drizzle: Dense intensity",
+        "61": "Rain: Slight intensity",
+        "63": "Rain: Moderate intensity",
+        "65": "Rain: Heavy intensity",
+        "66": "Freezing Rain: Light intensity",
+        "67": "Freezing Rain: Heavy intensity",
+        "71": "Snow fall: Slight intensity",
+        "73": "Snow fall: Moderate intensity",
+        "75": "Snow fall: Heavy intensity",
+        "77": "Snow grains",
+        "80": "Rain showers: Slight intensity",
+        "81": "Rain showers: Moderate intensity",
+        "82": "Rain showers: Violent intensity",
+        "85": "Snow showers: Slight intensity",
+        "86": "Snow showers: Heavy intensity",
+        "95": "Thunderstorm: Slight or moderate",
+        "96": "Thunderstorm with slight hail",
+        "99": "Thunderstorm with heavy hail"
+    }
+
+    description = weather_interpretation.get(code, "Unknown weather code")
+    return description
+
+def show_current_weather():
+    lat, lon = get_coord()
+    cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
+    retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+    openmeteo = openmeteo_requests.Client(session=retry_session)
+
+    # Make sure all required weather variables are listed here
+    # The order of variables in hourly or daily is important to assign them correctly below
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "current": ["temperature_2m", "is_day", "rain", "showers", "snowfall", "weather_code", "cloud_cover"],
+        "timezone": "auto"
+    }
+    responses = openmeteo.weather_api(url, params=params)
+
+    # Process first location. Add a for-loop for multiple locations or weather models
+    response = responses[0]
+    # print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
+    # print(f"Elevation {response.Elevation()} m asl")
+    # print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
+    # print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
+
+    # Current values. The order of variables needs to be the same as requested.
+    current = response.Current()
+    current_temperature_2m = current.Variables(0).Value()
+    current_is_day = current.Variables(1).Value()
+    current_rain = current.Variables(2).Value()
+    current_showers = current.Variables(3).Value()
+    current_snowfall = current.Variables(4).Value()
+    current_weather_code = current.Variables(5).Value()
+    current_cloud_cover = current.Variables(6).Value()
+
+    print(f"Current time {current.Time()}")
+    print(f"Current temperature_2m {current_temperature_2m}")
+    print(f"Current is_day {current_is_day}")
+    print(f"Current rain {current_rain}")
+    print(f"Current showers {current_showers}")
+    print(f"Current snowfall {current_snowfall}")
+    print(f"Current weather_code {current_weather_code}")
+    print(f"Current cloud_cover {current_cloud_cover}")
+
+    description = interpret_weather_code(str(int(current_weather_code)))
+    sunny_image = Image.open("sunny.jpg")
+    sunny_image = sunny_image.resize((100, 100))
+    sunny_image_tk = ImageTk.PhotoImage(sunny_image)
+    moon_image = Image.open("moon.png")
+    moon_image = moon_image.resize((100, 100))
+    moon_image_tk = ImageTk.PhotoImage(moon_image)
+    subwindow = tk.Toplevel(root)
+    tk.Label(subwindow,text=description).pack()
+    if current_is_day == 0.0:
+        weather_label = tk.Label(subwindow, image=moon_image_tk)
+        weather_label.pack()
+        weather_label.image = moon_image_tk
+    else:
+        weather_label = tk.Label(subwindow, image=sunny_image_tk)
+        weather_label.pack()
+        weather_label.image = sunny_image_tk
+    temp_label = tk.Label(subwindow, text=str(round(current_temperature_2m))+'°C')
+    temp_label.pack()
+    subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
+
+
 
 
 def show_weather_forecast():
@@ -922,10 +1141,6 @@ show_stacks_button_spent = ttk.Button(root,text='Show_stacks spent', command=sho
 show_stacks_button_spent.pack()
 
 
-
-
-
-
 # analyze_button = ttk.Button(root, text='Analyze PGE', command=analyze_csv)
 # analyze_button.config(state=DISABLED)
 # analyze_button.pack()
@@ -959,6 +1174,7 @@ display_graph_button = ttk.Button(root, text='Display Graph')
 city_label = ttk.Label(root, text="Enter City: ")
 city_label.pack()
 city_entry = ttk.Entry(root, width=20)
+city_entry.insert(0,"Lublin")
 city_entry.pack()
 
 show_weather_history_button = ttk.Button(root,text='Show_weather_history', command=show_weather_history)
@@ -966,6 +1182,9 @@ show_weather_history_button.pack()
 
 show_weather_forecast_button = ttk.Button(root,text='Show_7day_weather_forecast', command=show_weather_forecast)
 show_weather_forecast_button.pack()
+
+show_current_weather_button = ttk.Button(root,text='Show_current_weather_button', command=show_current_weather)
+show_current_weather_button.pack()
 
 show_hourly_usage_linechart_button = ttk.Button(root,text ='Show_hourly_usage_linechart', command=show_hourly_usage_linechart)
 show_hourly_usage_linechart_button.pack()
