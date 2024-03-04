@@ -88,10 +88,12 @@ frame1.pack(pady = 20)
 enter_start_date_label = tk.Label(root, text='Enter start date YYYYMMDD')
 enter_start_date_label.pack()
 start_date_entry = Entry(root)
+start_date_entry.insert(0,"20230101")
 start_date_entry.pack()
 enter_end_date_label = tk.Label(root, text='Enter end date YYYYMMDD')
 enter_end_date_label.pack()
 end_date_entry = tk.Entry(root)
+end_date_entry.insert(0,"20230109")
 end_date_entry.pack()
 
 
@@ -698,31 +700,41 @@ def show_weather_history():
         "longitude": lon,
         "start_date": start_date,
         "end_date": end_date,
-        "hourly": "temperature_2m"
+        "daily": ["weather_code", "temperature_2m_max", "temperature_2m_min", "sunshine_duration"],
+        "timezone": "Europe/Berlin"
     }
     responses = openmeteo.weather_api(url, params=params)
 
     # Process first location. Add a for-loop for multiple locations or weather models
     response = responses[0]
-    print(f"Coordinates {response.Latitude()}°E {response.Longitude()}°N")
+    print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
     print(f"Elevation {response.Elevation()} m asl")
     print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
     print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
-    # Process hourly data. The order of variables needs to be the same as requested.
-    hourly = response.Hourly()
-    hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
+    # Process daily data. The order of variables needs to be the same as requested.
+    daily = response.Daily()
+    daily_weather_code = daily.Variables(0).ValuesAsNumpy()
+    daily_temperature_2m_max = daily.Variables(1).ValuesAsNumpy()
+    daily_temperature_2m_min = daily.Variables(2).ValuesAsNumpy()
+    daily_sunshine_duration = daily.Variables(3).ValuesAsNumpy()
 
-    hourly_data = {"date": pd.date_range(
-        start=pd.to_datetime(hourly.Time(), unit="s"),
-        end=pd.to_datetime(hourly.TimeEnd(), unit="s"),
-        freq=pd.Timedelta(seconds=hourly.Interval()),
+    daily_data = {"Date": pd.date_range(
+        start=pd.to_datetime(daily.Time(), unit="s").normalize(),
+        end=pd.to_datetime(daily.TimeEnd(), unit="s").normalize(),
+        freq=pd.Timedelta(seconds=daily.Interval()),
         inclusive="left"
     )}
-    hourly_data["temperature_2m"] = hourly_temperature_2m
+    description = [interpret_weather_code(str(int(code))) for code in daily_weather_code]
+    daily_data["weather_code"] = description
+    daily_data["temperature_2m_max"] = [round(num) for num in daily_temperature_2m_max]
+    daily_data["temperature_2m_min"] = [round(num) for num in daily_temperature_2m_min]
+    # daily_data["sunshine_duration"] = daily_sunshine_duration
 
-    hourly_dataframe = pd.DataFrame(data=hourly_data)
-    print(hourly_dataframe)
+    daily_dataframe = pd.DataFrame(data=daily_data)
+    subwindow = tk.Toplevel(root)
+    tk.Label(subwindow, text=str(daily_dataframe.to_string(index=False))).pack()
+    # print(daily_dataframe)
 
 def interpret_weather_code(code):
     # Dokumentacja wzięta z OpenMeteo
@@ -859,18 +871,20 @@ def show_weather_forecast():
     daily_temperature_2m_max = daily.Variables(1).ValuesAsNumpy()
     daily_temperature_2m_min = daily.Variables(2).ValuesAsNumpy()
 
-    daily_data = {"date": pd.date_range(
-        start=pd.to_datetime(daily.Time(), unit="s"),
-        end=pd.to_datetime(daily.TimeEnd(), unit="s"),
+    daily_data = {"Date": pd.date_range(
+        start=pd.to_datetime(daily.Time(), unit="s").normalize(),
+        end=pd.to_datetime(daily.TimeEnd(), unit="s").normalize(),
         freq=pd.Timedelta(seconds=daily.Interval()),
         inclusive="left"
     )}
-    daily_data["weather_code"] = daily_weather_code
-    daily_data["temperature_2m_max"] = daily_temperature_2m_max
-    daily_data["temperature_2m_min"] = daily_temperature_2m_min
+    description = [interpret_weather_code(str(int(code))) for code in daily_weather_code]
+    daily_data["weather_code"] = description
+    daily_data["Max"] = [round(num) for num in daily_temperature_2m_max]
+    daily_data["Min"] = [round(num) for num in daily_temperature_2m_min]
     # print(str(daily_temperature_2m_min[1]) + " " + str(daily_temperature_2m_max[1]))
     daily_dataframe = pd.DataFrame(data=daily_data)
-    print(daily_dataframe)
+    subwindow = tk.Toplevel(root)
+    tk.Label(subwindow, text=str(daily_dataframe.to_string(index=False))).pack()
 
 
 def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
