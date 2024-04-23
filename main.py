@@ -76,25 +76,25 @@ root.title("Consumption Visualizer")
 
 
 
-bg_image = Image.open("bg_pv_hd.jpg")
-bg_photo = ImageTk.PhotoImage(bg_image)
+# bg_image = Image.open("bg_pv_hd.jpg")
+# bg_photo = ImageTk.PhotoImage(bg_image)
+#
+# bg_label = tk.Label(root, image=bg_photo)
+# bg_label.place(x = 0, y =0)
 
-bg_label = tk.Label(root, image=bg_photo)
-bg_label.place(x = 0, y =0)
-
-frame1 = Frame(root)
-frame1.pack(pady = 20)
+# frame1 = Frame(root)
+# frame1.pack(pady = 20)
 
 enter_start_date_label = tk.Label(root, text='Enter start date YYYYMMDD')
 enter_start_date_label.pack()
-start_date_entry = Entry(root)
-start_date_entry.insert(0,"20230101")
-start_date_entry.pack()
+start_date_entry_cal = Calendar(root, selectmode='day', year=2023, month=1, day=1)
+# start_date_entry_cal.insert(0, "20230101")
+start_date_entry_cal.pack()
 enter_end_date_label = tk.Label(root, text='Enter end date YYYYMMDD')
 enter_end_date_label.pack()
-end_date_entry = tk.Entry(root)
-end_date_entry.insert(0,"20230109")
-end_date_entry.pack()
+end_date_entry_cal = Calendar(root, selectmode='day', year=2023, month=1, day=9)
+# end_date_entry_cal.insert(0, "20230109")
+end_date_entry_cal.pack()
 
 
 # Label(root, text= "Choose a Date", background= 'gray61', foreground="white").pack() #padx=20,pady=20
@@ -391,10 +391,8 @@ def parse_Fronius_5(csv_reader, line_count):
         froniusMinute_usagelist.append(instance)
 
 def show_sum():
-    startDate = start_date_entry.get()
-    print(startDate)
-    endDate = end_date_entry.get()
-    print(endDate)
+    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
 
     startDateReached = False
     balancedSum = 0
@@ -455,10 +453,8 @@ def show_energy_price():
     pricePerKwHSpent = Decimal(energy_price_spent_entry.get())
     pricePerKwHGenerated = Decimal(energy_price_generated_entry.get())
 
-    startDate = start_date_entry.get()
-    # print(startDate)
-    endDate = end_date_entry.get()
-    # print(endDate)
+    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
 
     startDateReached = False
     balancedSum = 0
@@ -524,10 +520,8 @@ def show_energy_price():
     plt.show()
 
 def show_stacks_balanced():
-    startDate = start_date_entry.get()
-    print(startDate)
-    endDate = end_date_entry.get()
-    print(endDate)
+    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
 
     balanced_dailySumList = []
     generated_dailySumList = []
@@ -583,10 +577,8 @@ def show_stacks_balanced():
     plt.show()
 
 def show_stacks_generated():
-    startDate = start_date_entry.get()
-    print(startDate)
-    endDate = end_date_entry.get()
-    print(endDate)
+    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
 
     balanced_dailySumList = []
     generated_dailySumList = []
@@ -613,10 +605,8 @@ def show_stacks_generated():
     plt.show()
 
 def show_stacks_spent():
-    startDate = start_date_entry.get()
-    print(startDate)
-    endDate = end_date_entry.get()
-    print(endDate)
+    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
 
     spent_dailySumList = []
     spent_dateList = []
@@ -639,8 +629,8 @@ def show_stacks_spent():
     plt.show()
 
 def show_line_graph():
-    startDate = start_date_entry.get()
-    endDate = end_date_entry.get()
+    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
 
     balanced_dailySumList = []
     generated_dailySumList = []
@@ -683,10 +673,10 @@ def show_line_graph():
 
 def show_weather_history():
     lat, lon = get_coord()
-    startDate = start_date_entry.get()
-    endDate = end_date_entry.get()
-    start_date = datetime.strptime(start_date_entry.get(), "%Y%m%d").strftime("%Y-%m-%d")
-    end_date = datetime.strptime(end_date_entry.get(), "%Y%m%d").strftime("%Y-%m-%d")
+    startDate = start_date_entry_cal.get_date()
+    endDate = end_date_entry_cal.get_date()
+    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%Y%m%d").strftime("%Y-%m-%d")
+    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%Y%m%d").strftime("%Y-%m-%d")
     # Kod wzięty z dokimentacji Historical Weather API
     cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
@@ -976,8 +966,8 @@ def download_file(url, destination):
 # login__button.pack()
 
 def show_hourly_usage_linechart():
-    startDate = start_date_entry.get()
-    print(startDate)
+    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    # endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")    print(startDate)
     picked_day_balanced = day
     picked_day_generated = day
     picked_day_spent = day
@@ -1009,8 +999,8 @@ def show_hourly_usage_linechart():
     plt.show()
 
 def show_fronius_sum():
-    start_date = datetime.strptime(start_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
+    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
+    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
     # print(start_date)
     # print(end_date)
     sum_fronius = 0
@@ -1031,8 +1021,8 @@ def show_fronius_sum():
     subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
 
 def show_stacks_Fronius_daily():
-    start_date = datetime.strptime(start_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
+    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
+    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
 
     dailyProduction_list = []
     dateList = []
@@ -1055,8 +1045,8 @@ def show_stacks_Fronius_daily():
     plt.show()
 
 def show_linechart_Fronius_daily():
-    start_date = datetime.strptime(start_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
+    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
+    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
 
     dailyProduction_list = []
     dateList = []
@@ -1075,10 +1065,10 @@ def show_linechart_Fronius_daily():
     plt.show()
 
 def show_differnce_betweenFronius_and_PGE_daily():
-    startDate = start_date_entry.get()
-    endDate = end_date_entry.get()
-    start_date = datetime.strptime(start_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
+    startDate = start_date_entry_cal.get_date()
+    endDate = end_date_entry_cal.get_date()
+    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
+    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
 
     startDateReached = False
     generatedSum = 0
