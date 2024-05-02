@@ -41,6 +41,22 @@ class FroniusMinute:
         self.HourUsageList = HourUsageList
         self.Daily_generatedKWh = Daily_generated/1000
 
+class RealConsumptionHourly:
+    def __init__(self, DataOdczytu, HourUsageList):
+        self.DataOdczytu = DataOdczytu
+        self.HourUsageList = HourUsageList
+        self.DailySum = sum(HourUsageList)
+
+class RealConsumptionDaily:
+    def __init__(self, DataOdczytu, DailyConsumpution):
+        self.DataOdczytu = DataOdczytu
+        self.DailyConsumpution = DailyConsumpution
+
+class CustomDaily:
+    def __init__(self, DataOdczytu, DailyConsumpution):
+        self.DataOdczytu = DataOdczytu
+        self.DailyConsumpution = DailyConsumpution
+
 
 listEmpty = []
 day = Day(590543520100010199,20230101,'En. Czynna zbilansowana', listEmpty)
@@ -48,27 +64,64 @@ global balanced
 balanced = []
 balanced.append(day)
 balanced.clear()
-global generated
-generated = []
-generated.append(day)
-generated.clear()
-global spent
-spent = []
-spent.append(day)
-spent.clear()
-global froniusDaily_usagelist
-froniusDaily_usagelist = []
+global energySold
+energySold = []
+energySold.append(day)
+energySold.clear()
+global energyBought
+energyBought = []
+energyBought.append(day)
+energyBought.clear()
+global froniusDaily_production_list
+froniusDaily_production_list = []
 froniusDay = FroniusDaily('02.01.2023', 8.11099)
-froniusDaily_usagelist.append(froniusDay)
-froniusDaily_usagelist.clear()
-global froniusMinute_usagelist
-froniusMinute_usagelist = []
+froniusDaily_production_list.append(froniusDay)
+froniusDaily_production_list.clear()
+global froniusMinute_prodcution_list
+froniusMinute_prodcution_list = []
 froniusMinute = FroniusMinute('01.01.2023', 0.0, listEmpty)
-froniusMinute_usagelist.append(froniusMinute)
-froniusMinute_usagelist.clear()
+froniusMinute_prodcution_list.append(froniusMinute)
+froniusMinute_prodcution_list.clear()
+global realConsumptionHourly_list
+realConsumptionHourly_list = []
+realConsumptionHourly = RealConsumptionHourly('01.01.2023', listEmpty)
+realConsumptionHourly_list.append(realConsumptionHourly)
+realConsumptionHourly_list.clear()
+global realConsumptionDaily_list
+realConsumptionDaily_list = []
+realConsumptionDaily = RealConsumptionDaily('01.01.2023', 0.0)
+realConsumptionDaily_list.append(realConsumptionDaily)
+realConsumptionDaily_list.clear()
+global customBalanced
+customBalanced = []
+customDay = CustomDaily('01.01.2023', 0.0)
+customBalanced.append(customDay)
+customBalanced.clear()
+global customGivenEnergy
+customGivenEnergy = []
+customDay = CustomDaily('01.01.2023', 0.0)
+customGivenEnergy.append(customDay)
+customGivenEnergy.clear()
+global customTakenEnergy
+customTakenEnergy = []
+customDay = CustomDaily('01.01.2023', 0.0)
+customTakenEnergy.append(customDay)
+customTakenEnergy.clear()
+global customProducedEnergy
+customProducedEnergy = []
+customDay = CustomDaily('01.01.2023', 0.0)
+customProducedEnergy.append(customDay)
+customProducedEnergy.clear()
+global customConsumedEnergy
+customConsumedEnergy = []
+customDay = CustomDaily('01.01.2023', 0.0)
+customConsumedEnergy.append(customDay)
+customConsumedEnergy.clear()
+
+
 
 root = tk.Tk()
-root.geometry("800x800")
+root.geometry("800x1000")
 root.title("Consumption Visualizer")
 # label = tk.Label(text="Consumption Visualizer")
 # label.pack()
@@ -85,16 +138,17 @@ root.title("Consumption Visualizer")
 # frame1 = Frame(root)
 # frame1.pack(pady = 20)
 
-enter_start_date_label = tk.Label(root, text='Enter start date YYYYMMDD')
-enter_start_date_label.pack()
+enter_start_date_label = tk.Label(root, text='Enter start date :')
+enter_start_date_label.place(x=100, y=10)
+
 start_date_entry_cal = Calendar(root, selectmode='day', year=2023, month=1, day=1)
-# start_date_entry_cal.insert(0, "20230101")
-start_date_entry_cal.pack()
-enter_end_date_label = tk.Label(root, text='Enter end date YYYYMMDD')
-enter_end_date_label.pack()
+start_date_entry_cal.place(x=30, y=40)
+
+enter_end_date_label = tk.Label(root, text='Enter end date :')
+enter_end_date_label.place(x=100, y=270)
+
 end_date_entry_cal = Calendar(root, selectmode='day', year=2023, month=1, day=9)
-# end_date_entry_cal.insert(0, "20230109")
-end_date_entry_cal.pack()
+end_date_entry_cal.place(x=30, y=300)
 
 
 # Label(root, text= "Choose a Date", background= 'gray61', foreground="white").pack() #padx=20,pady=20
@@ -141,17 +195,74 @@ def open_file_fronius_daily():
         csv_reader = csv.reader(input, delimiter=',')
         line_count = 0
         parse_Fronius(csv_reader, line_count)
-        for instance in froniusDaily_usagelist:
+        for instance in froniusDaily_production_list:
             print(instance.DataOdczytu)
 def open_file_fronius_5():
     filename = filedialog.askopenfilename()
+
     with open(filename) as input:
         csv_reader = csv.reader(input, delimiter=',')
         line_count = 0
         parse_Fronius_5(csv_reader, line_count)
-        for instance in froniusMinute_usagelist:
+        for instance in froniusMinute_prodcution_list:
             print(instance.DataOdczytu)
 
+def open_file_custom_daily_report():
+    filename = filedialog.askopenfilename()
+    subwindow = tk.Toplevel(root)
+    delimiter_entry_label = tk.Label(subwindow, text='Enter delimiter :')
+    delimiter_entry_label.pack()
+    delimiter_entry = tk.Entry(subwindow)
+    delimiter_entry.pack()
+    date_column_entry_label = tk.Label(subwindow, text='Enter date column :')
+    date_column_entry_label.pack()
+    date_column_entry = tk.Entry(subwindow)
+    date_column_entry.pack()
+    power_data_column_entry_label = tk.Label(subwindow, text='Enter power data column :')
+    power_data_column_entry_label.pack()
+    power_data_column_entry = tk.Entry(subwindow)
+    power_data_column_entry.pack()
+    date_format_entry_label = tk.Label(subwindow, text='Enter date format :')
+    date_format_entry_label.pack()
+    date_format_entry = tk.Entry(subwindow)
+    date_format_entry.pack()
+    report_type_entry_label = tk.Label(subwindow, text='Enter report type : Given, Taken, Balanced, Produced, Consumed')
+    report_type_entry_label.pack()
+    report_type_entry = tk.Entry(subwindow)
+    report_type_entry.pack()
+    power_format_entry_label = tk.Label(subwindow, text='Enter power format : WH, kWH')
+    power_format_entry_label.pack()
+    power_format_entry = tk.Entry(subwindow)
+    power_format_entry.pack()
+
+    with open(filename) as input:
+        csv_reader = csv.reader(input, delimiter=delimiter_entry.get())
+        line_count = 0
+        for row in csv_reader:
+            if line_count == 0 or line_count == 1:
+                print(row)
+                line_count += 1
+            else:
+                decimal_daily_energy_generation_fronius = Decimal(str(row[int(power_data_column_entry.get())]))
+                date = row[int(date_column_entry.get())]
+                customDay = CustomDaily(date, decimal_daily_energy_generation_fronius)
+                if report_type_entry.get() == 'Given':
+                    customGivenEnergy.append(customDay)
+                elif report_type_entry.get() == 'Taken':
+                    customTakenEnergy.append(customDay)
+                elif report_type_entry.get() == 'Balanced':
+                    customBalanced.append(customDay)
+                elif report_type_entry.get() == 'Produced':
+                    customProducedEnergy.append(customDay)
+                elif report_type_entry.get() == 'Consumed':
+                    customConsumedEnergy.append(customDay)
+
+                # The date is in [dd.MM.yyyy]
+                # fronius_day = FroniusDaily(row[0], decimal_daily_energy_generation_fronius)
+                # froniusDaily_production_list.append(fronius_day)
+        # parse_Fronius_5(csv_reader, line_count)
+        for instance in froniusMinute_prodcution_list:
+            print(instance.DataOdczytu)
 
 open_button = ttk.Button(root, text='Open PGE report', command=open_file)
 open_button.pack()
@@ -161,6 +272,9 @@ open_button_Fronius_daily.pack()
 
 open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_5)
 open_button_Fronius_daily_15_minute_button.pack()
+
+open_button_custom_daily_report = ttk.Button(root, text='Open Custom Report', command=open_file_custom_daily_report)
+open_button_custom_daily_report.pack()
 
 # Function to find objects by parameter
 def find_by_date(objects_list, date):
@@ -195,11 +309,11 @@ def analyze_day():
             if i.DataOdczytu == startDate:
                 picked_day_balanced = i
                 break
-        for i in generated:
+        for i in energySold:
             if i.DataOdczytu == startDate:
                 picked_day_generated = i
                 break
-        for i in spent:
+        for i in energyBought:
             if i.DataOdczytu == startDate:
                 picked_day_spent = i
                 break
@@ -220,7 +334,7 @@ def analyze_day():
         date = datetime.strptime(cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
         print(date)
         # end_date = datetime.strptime(end_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
-        day = find_by_date(froniusMinute_usagelist, date)
+        day = find_by_date(froniusMinute_prodcution_list, date)
         if day == None:
             messagebox.showerror("Error No objects found with date ", date)
         else:
@@ -318,7 +432,7 @@ def show_weather_hourly_1day(date):
     # print(daily_dataframe)
 
 def parse_and_export_to_lists(csv_reader, line_count):
-    global balanced, generated, spent
+    global balanced, energySold, energyBought
     for row in csv_reader:
         if line_count == 0:
             print(row)
@@ -341,15 +455,15 @@ def parse_and_export_to_lists(csv_reader, line_count):
             if row[numColKierunek] == 'En. Czynna zbilansowana':
                 balanced.append(day)
             elif row[numColKierunek] == 'En.Czynna Oddana':
-                generated.append(day)
+                energySold.append(day)
             else:
-                spent.append(day)
+                energyBought.append(day)
             line_count += 1
 
     print(f'Total: {line_count} lines')
 
 def parse_Fronius(csv_reader,line_count):
-    global froniusDaily_usagelist
+    global froniusDaily_production_list
     for row in csv_reader:
         if line_count == 0 or line_count == 1:
             print(row)
@@ -358,10 +472,10 @@ def parse_Fronius(csv_reader,line_count):
             decimal_daily_energy_generation_fronius = Decimal(str(row[1]))
             #The date is in [dd.MM.yyyy]
             fronius_day = FroniusDaily(row[0], decimal_daily_energy_generation_fronius)
-            froniusDaily_usagelist.append(fronius_day)
+            froniusDaily_production_list.append(fronius_day)
 
 def parse_Fronius_5(csv_reader, line_count):
-    global froniusMinute_usagelist
+    global froniusMinute_prodcution_list
     hourly_sum = 0
     prev_hour = 0
     prev_day = ''
@@ -388,7 +502,7 @@ def parse_Fronius_5(csv_reader, line_count):
     for date, data in daily_data.items():
         formated_date = date.strftime("%d.%m.%Y")
         instance = FroniusMinute(formated_date, data['total_energy'], data['hourly_energy'])
-        froniusMinute_usagelist.append(instance)
+        froniusMinute_prodcution_list.append(instance)
 
 def show_sum():
     startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
@@ -407,7 +521,7 @@ def show_sum():
 
     startDateReached = False
     generatedSum = 0
-    for i in generated:
+    for i in energySold:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
@@ -418,7 +532,7 @@ def show_sum():
 
     startDateReached = False
     spentSum = 0
-    for i in spent:
+    for i in energyBought:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
@@ -445,7 +559,7 @@ def show_sum():
     for bar, value in zip(bars, values):
         plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
 
-    print(generated[0].DailySum)
+    print(energySold[0].DailySum)
     print(startDate)
     plt.show()
 
@@ -469,7 +583,7 @@ def show_energy_price():
 
     startDateReached = False
     generatedSum = 0
-    for i in generated:
+    for i in energySold:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
@@ -480,7 +594,7 @@ def show_energy_price():
 
     startDateReached = False
     spentSum = 0
-    for i in spent:
+    for i in energyBought:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
@@ -612,7 +726,7 @@ def show_stacks_spent():
     spent_dateList = []
     #count = 20230101
     startDateReached = False
-    for i in spent:
+    for i in energyBought:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
@@ -641,7 +755,7 @@ def show_line_graph():
     # count = 20230101
 
     startDateReached = False
-    for i in generated:
+    for i in energySold:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
@@ -650,7 +764,7 @@ def show_line_graph():
         if i.DataOdczytu == endDate:
             break
     startDateReached = False
-    for i in spent:
+    for i in energyBought:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
@@ -977,11 +1091,11 @@ def show_hourly_usage_linechart():
         if i.DataOdczytu == startDate:
             picked_day_balanced = i
             break
-    for i in generated:
+    for i in energySold:
         if i.DataOdczytu == startDate:
             picked_day_generated = i
             break
-    for i in spent:
+    for i in energyBought:
         if i.DataOdczytu == startDate:
             picked_day_spent = i
             break
@@ -1005,7 +1119,7 @@ def show_fronius_sum():
     # print(end_date)
     sum_fronius = 0
     startDateReached = False
-    for i in froniusDaily_usagelist:
+    for i in froniusDaily_production_list:
         if i.DataOdczytu == start_date:
             startDateReached = True
         if startDateReached == True:
@@ -1028,7 +1142,7 @@ def show_stacks_Fronius_daily():
     dateList = []
 
     startDateReached = False
-    for i in froniusDaily_usagelist:
+    for i in froniusDaily_production_list:
         if i.DataOdczytu == start_date:
             startDateReached = True
         if startDateReached == True:
@@ -1052,7 +1166,7 @@ def show_linechart_Fronius_daily():
     dateList = []
 
     startDateReached = False
-    for i in froniusDaily_usagelist:
+    for i in froniusDaily_production_list:
         if i.DataOdczytu == start_date:
             startDateReached = True
         if startDateReached == True:
@@ -1072,7 +1186,7 @@ def show_differnce_betweenFronius_and_PGE_daily():
 
     startDateReached = False
     generatedSum = 0
-    for i in generated:
+    for i in energySold:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
@@ -1082,7 +1196,7 @@ def show_differnce_betweenFronius_and_PGE_daily():
 
     sum_fronius = 0
     startDateReached = False
-    for i in froniusDaily_usagelist:
+    for i in froniusDaily_production_list:
         if i.DataOdczytu == start_date:
             startDateReached = True
         if startDateReached == True:
@@ -1109,7 +1223,7 @@ def show_differnce_betweenFronius_and_PGE_daily():
     for bar, value in zip(bars, values):
         plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
 
-    print(generated[0].DailySum)
+    print(energySold[0].DailySum)
     print(startDate)
     plt.show()
 
