@@ -13,9 +13,11 @@ import requests_cache
 import pandas as pd
 from retry_requests import retry
 from matplotlib.ticker import FormatStrFormatter
+from tkcalendar import Calendar, DateEntry
 
-from tkcalendar import *
 import tkinter as tk
+from tkcalendar import *
+from tkcalendar import Calendar
 import matplotlib.pyplot as plt
 from decimal import Decimal
 import numpy as np
@@ -150,6 +152,26 @@ enter_end_date_label.place(x=100, y=270)
 end_date_entry_cal = Calendar(root, selectmode='day', year=2023, month=1, day=9)
 end_date_entry_cal.place(x=30, y=300)
 
+start_date_entry_cal.config(state='disabled')
+end_date_entry_cal.config(state='disabled')
+
+global available_dates
+available_dates = []
+
+def unlock_dates():
+    min_date = min(available_dates)
+    max_date = max(available_dates)
+    min_date = datetime.strptime(min_date, "%m/%d/%y").date()
+    max_date = datetime.strptime(max_date, "%m/%d/%y").date()
+    start_date_entry_cal.config(mindate=min_date, maxdate=max_date)
+    end_date_entry_cal.config(mindate=min_date, maxdate=max_date)
+    start_date_entry_cal.configure(state='normal')
+    end_date_entry_cal.configure(state='normal')
+    # for date_str in available_dates:
+        # min_date = datetime.strptime(min_date, "%m/%d/%y").date()
+        # max_date = datetime.strptime(max_date, "%m/%d/%y").date()
+        # print(date_str)
+
 
 # Label(root, text= "Choose a Date", background= 'gray61', foreground="white").pack() #padx=20,pady=20
 # #Create a Calendar using DateEntry
@@ -186,6 +208,8 @@ def open_file():
         csv_reader = csv.reader(input, delimiter=';')
         line_count = 0
         parse_and_export_to_lists(csv_reader, line_count)
+        unlock_dates()
+
     # analyze_button.config(state=tk.DISABLED)
     #analyze_button.config(state=tk.NORMAL)
 
@@ -195,6 +219,8 @@ def open_file_fronius_daily():
         csv_reader = csv.reader(input, delimiter=',')
         line_count = 0
         parse_Fronius(csv_reader, line_count)
+        unlock_dates()
+
         for instance in froniusDaily_production_list:
             print(instance.DataOdczytu)
 def open_file_fronius_5():
@@ -204,6 +230,8 @@ def open_file_fronius_5():
         csv_reader = csv.reader(input, delimiter=',')
         line_count = 0
         parse_Fronius_5(csv_reader, line_count)
+        unlock_dates()
+
         for instance in froniusMinute_prodcution_list:
             print(instance.DataOdczytu)
 
@@ -243,9 +271,13 @@ def open_file_custom_daily_report():
                 print(row)
                 line_count += 1
             else:
-                decimal_daily_energy_generation_fronius = Decimal(str(row[int(power_data_column_entry.get())]))
+                custom_daily_power_amount = Decimal(str(row[int(power_data_column_entry.get())]))
                 date = row[int(date_column_entry.get())]
-                customDay = CustomDaily(date, decimal_daily_energy_generation_fronius)
+                customDay = CustomDaily(date, custom_daily_power_amount)
+                formated_to_calendar_format_date = datetime.strptime(row[int(power_data_column_entry.get())], date_format_entry.get()).strftime(
+                    "%m/%d/%y")
+
+                available_dates.append(formated_to_calendar_format_date)
                 if report_type_entry.get() == 'Given':
                     customGivenEnergy.append(customDay)
                 elif report_type_entry.get() == 'Taken':
@@ -257,13 +289,15 @@ def open_file_custom_daily_report():
                 elif report_type_entry.get() == 'Consumed':
                     customConsumedEnergy.append(customDay)
 
+
                 # The date is in [dd.MM.yyyy]
                 # fronius_day = FroniusDaily(row[0], decimal_daily_energy_generation_fronius)
                 # froniusDaily_production_list.append(fronius_day)
         # parse_Fronius_5(csv_reader, line_count)
+
         for instance in froniusMinute_prodcution_list:
             print(instance.DataOdczytu)
-
+        unlock_dates()
 open_button = ttk.Button(root, text='Open PGE report', command=open_file)
 open_button.pack()
 
@@ -452,6 +486,8 @@ def parse_and_export_to_lists(csv_reader, line_count):
             # print(numbers)
             numbers = [Decimal(str(num)) for num in numbers]
             day = Day(row[0], row[numColDataOdczytu], row[numColKierunek], numbers)
+            formated_to_calendar_format_date = datetime.strptime(row[numColDataOdczytu], "%Y%m%d").strftime("%m/%d/%y")
+            available_dates.append(formated_to_calendar_format_date)
             if row[numColKierunek] == 'En. Czynna zbilansowana':
                 balanced.append(day)
             elif row[numColKierunek] == 'En.Czynna Oddana':
@@ -473,6 +509,8 @@ def parse_Fronius(csv_reader,line_count):
             #The date is in [dd.MM.yyyy]
             fronius_day = FroniusDaily(row[0], decimal_daily_energy_generation_fronius)
             froniusDaily_production_list.append(fronius_day)
+            formated_to_calendar_format_date = row[0].strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%m/%d/%y")
+            available_dates.append(formated_to_calendar_format_date)
 
 def parse_Fronius_5(csv_reader, line_count):
     global froniusMinute_prodcution_list
@@ -501,6 +539,8 @@ def parse_Fronius_5(csv_reader, line_count):
             daily_data[date]['hourly_energy'][hour_index] += energy
     for date, data in daily_data.items():
         formated_date = date.strftime("%d.%m.%Y")
+        formated_to_calendar_format_date = date.strftime("%m/%d/%y")
+        available_dates.append(formated_to_calendar_format_date)
         instance = FroniusMinute(formated_date, data['total_energy'], data['hourly_energy'])
         froniusMinute_prodcution_list.append(instance)
 
