@@ -1416,72 +1416,74 @@ analyze_day_button = ttk.Button(root, text='Analyze day', command=analyze_day, w
 analyze_day_button.place(x=340, y=160)
 
 # Right: Other widgets
-show_line_graph_button = ttk.Button(root, text='Show line graph', command=show_line_graph)
-show_line_graph_button.place(x=600, y=10)
 
-show_stacks_button_balanced = ttk.Button(root, text='Show stacks balanced', command=show_stacks_balanced)
-show_stacks_button_balanced.place(x=600, y=40)
+button_size1 = 30
+show_line_graph_button = ttk.Button(root, text='Show line graph', command=show_line_graph, width=button_size1)
+show_line_graph_button.place(x=640, y=10)
 
-show_stacks_button_generated = ttk.Button(root, text='Show stacks generated', command=show_stacks_generated)
-show_stacks_button_generated.place(x=600, y=70)
+show_stacks_button_balanced = ttk.Button(root, text='Show stacks balanced', command=show_stacks_balanced, width=button_size1)
+show_stacks_button_balanced.place(x=640, y=40)
 
-show_stacks_button_spent = ttk.Button(root, text='Show stacks spent', command=show_stacks_spent)
-show_stacks_button_spent.place(x=600, y=100)
+show_stacks_button_generated = ttk.Button(root, text='Show stacks generated', command=show_stacks_generated, width=button_size1)
+show_stacks_button_generated.place(x=640, y=70)
 
-show_fronius_sum_button = ttk.Button(root, text='Show fronius sum', command=show_fronius_sum)
-show_fronius_sum_button.place(x=600, y=130)
+show_stacks_button_spent = ttk.Button(root, text='Show stacks spent', command=show_stacks_spent, width=button_size1)
+show_stacks_button_spent.place(x=640, y=100)
 
-show_sum_button = ttk.Button(root, text='Show sum', command=show_sum)
-show_sum_button.place(x=600, y=160)
+show_fronius_sum_button = ttk.Button(root, text='Show fronius sum', command=show_fronius_sum, width=button_size1)
+show_fronius_sum_button.place(x=640, y=130)
 
-tk.Label(root, text="Price per KwH Spent:").place(x=600, y=200)
+show_sum_button = ttk.Button(root, text='Show sum', command=show_sum, width=button_size1)
+show_sum_button.place(x=640, y=160)
+
+tk.Label(root, text="Price per KwH Spent:").place(x=640, y=200)
 energy_price_spent_entry = tk.Entry(root)
-energy_price_spent_entry.place(x=600, y=220)
+energy_price_spent_entry.place(x=640, y=220)
 
-tk.Label(root, text="Price per KwH Generated:").place(x=600, y=250)
+tk.Label(root, text="Price per KwH Generated:").place(x=640, y=250)
 energy_price_generated_entry = tk.Entry(root)
-energy_price_generated_entry.place(x=600, y=270)
+energy_price_generated_entry.place(x=640, y=270)
 
-show_energy_price_button = ttk.Button(root, text='Show energy price spent', command=show_energy_price)
-show_energy_price_button.place(x=600, y=300)
+show_energy_price_button = ttk.Button(root, text='Show energy price spent', command=show_energy_price, width=button_size1)
+show_energy_price_button.place(x=640, y=300)
 
-show_stacks_Fronius_daily_button = ttk.Button(root, text='Show stacks Fronius daily', command=show_stacks_Fronius_daily)
-show_stacks_Fronius_daily_button.place(x=600, y=330)
+show_stacks_Fronius_daily_button = ttk.Button(root, text='Show stacks Fronius daily', command=show_stacks_Fronius_daily, width=button_size1)
+show_stacks_Fronius_daily_button.place(x=640, y=330)
 
-show_linechart_Fronius_daily_button = ttk.Button(root, text='Show linechart Fronius daily', command=show_linechart_Fronius_daily)
-show_linechart_Fronius_daily_button.place(x=600, y=360)
+show_linechart_Fronius_daily_button = ttk.Button(root, text='Show linechart Fronius daily', command=show_linechart_Fronius_daily, width=button_size1)
+show_linechart_Fronius_daily_button.place(x=640, y=360)
 
 show_differnce_betweenFronius_and_PGE_daily_button = ttk.Button(root, text='Show differnce between Fronius and PGE data ', command=show_differnce_betweenFronius_and_PGE_daily)
-show_differnce_betweenFronius_and_PGE_daily_button.place(x=600, y=390)
+show_differnce_betweenFronius_and_PGE_daily_button.place(x=640, y=390)
 
 display_graph_button = ttk.Button(root, text='Display Graph')
-display_graph_button.place(x=600, y=420)
+display_graph_button.place(x=640, y=420)
 
 city_label = ttk.Label(root, text="Enter City: ")
-city_label.place(x=600, y=450)
+city_label.place(x=640, y=450)
 
 city_entry = ttk.Entry(root, width=20)
 city_entry.insert(0, "Lublin")
-city_entry.place(x=600, y=470)
+city_entry.place(x=640, y=470)
 
-show_weather_history_button = ttk.Button(root, text='Show weather history', command=show_weather_history)
-show_weather_history_button.place(x=600, y=500)
+show_weather_history_button = ttk.Button(root, text='Show weather history', command=show_weather_history, width=button_size1)
+show_weather_history_button.place(x=640, y=500)
 
-show_weather_forecast_button = ttk.Button(root, text='Show 7day weather forecast', command=show_weather_forecast)
-show_weather_forecast_button.place(x=600, y=530)
+show_weather_forecast_button = ttk.Button(root, text='Show 7day weather forecast', command=show_weather_forecast, width=button_size1)
+show_weather_forecast_button.place(x=640, y=530)
 
-show_current_weather_button = ttk.Button(root, text='Show current weather', command=show_current_weather)
-show_current_weather_button.place(x=600, y=560)
+show_current_weather_button = ttk.Button(root, text='Show current weather', command=show_current_weather, width=button_size1)
+show_current_weather_button.place(x=640, y=560)
 
-show_hourly_usage_linechart_button = ttk.Button(root, text='Show hourly usage linechart', command=show_hourly_usage_linechart)
-show_hourly_usage_linechart_button.place(x=600, y=590)
+show_hourly_usage_linechart_button = ttk.Button(root, text='Show hourly usage linechart', command=show_hourly_usage_linechart, width=button_size1)
+show_hourly_usage_linechart_button.place(x=640, y=590)
 
-tk.Label(root, text="Enter plant power:").place(x=600, y=620)
+tk.Label(root, text="Enter plant power:").place(x=640, y=620)
 plant_power_entry = tk.Entry(root)
-plant_power_entry.place(x=600, y=640)
+plant_power_entry.place(x=640, y=640)
 
-solar_energy_prediction_forecast_button = ttk.Button(root, text='Solar energy prediction forecast', command=solar_energy_prediction_forecast)
-solar_energy_prediction_forecast_button.place(x=600, y=670)
+solar_energy_prediction_forecast_button = ttk.Button(root, text='Solar energy prediction forecast', command=solar_energy_prediction_forecast, width=button_size1)
+solar_energy_prediction_forecast_button.place(x=640, y=670)
 
 # L1 = Label(root, text="Enter Date")
 # L1.pack()
