@@ -1359,7 +1359,13 @@ menubar = tk.Menu(root)
 
 # File menu
 file_menu = tk.Menu(menubar, tearoff=0)
-file_menu.add_command(label="Open", command=open_file)
+file_menu.add_command(label="Open PGE report ", command=open_file)
+# file_menu.add_separator()
+file_menu.add_command(label="Open fronius daily report ", command=open_file_fronius_daily)
+# file_menu.add_separator()
+file_menu.add_command(label="Open fronius 15 minute report ", command=open_file_fronius_5)
+file_menu.add_separator()
+file_menu.add_command(label="Conigure custom report", command=open_file_custom_daily_report)
 file_menu.add_separator()
 file_menu.add_command(label="Exit", command=root.quit)
 menubar.add_cascade(label="File", menu=file_menu)
@@ -1390,20 +1396,24 @@ start_date_entry_cal.config(state='disabled')
 end_date_entry_cal.config(state='disabled')
 
 # Center: PGE related stuff
-open_button = ttk.Button(root, text='Open PGE report', command=open_file)
-open_button.place(x=300, y=10)
+button_size = 40
+style = ttk.Style()
+style.configure('Custom.TButton', background='blue')
 
-open_button_Fronius_daily = ttk.Button(root, text='Open Fronius report', command=open_file_fronius_daily)
-open_button_Fronius_daily.place(x=300, y=40)
+open_button = ttk.Button(root, text='Open PGE report', command=open_file, width=button_size, style='Custom.TButton')
+open_button.place(x=340, y=40)
 
-open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_5)
-open_button_Fronius_daily_15_minute_button.place(x=300, y=70)
+open_button_Fronius_daily = ttk.Button(root, text='Open Fronius report', command=open_file_fronius_daily, width=button_size, style='Custom.TButton')
+open_button_Fronius_daily.place(x=340, y=70)
 
-open_button_custom_daily_report = ttk.Button(root, text='Open Custom Report', command=open_file_custom_daily_report)
-open_button_custom_daily_report.place(x=300, y=100)
+open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_5, width=button_size, style='Custom.TButton')
+open_button_Fronius_daily_15_minute_button.place(x=340, y=100)
 
-analyze_day_button = ttk.Button(root, text='Analyze day', command=analyze_day)
-analyze_day_button.place(x=300, y=130)
+open_button_custom_daily_report = ttk.Button(root, text='Open Custom Report', command=open_file_custom_daily_report, width=button_size, style='Custom.TButton')
+open_button_custom_daily_report.place(x=340, y=130)
+
+analyze_day_button = ttk.Button(root, text='Analyze day', command=analyze_day, width=button_size, style='Custom.TButton')
+analyze_day_button.place(x=340, y=160)
 
 # Right: Other widgets
 show_line_graph_button = ttk.Button(root, text='Show line graph', command=show_line_graph)
@@ -1415,7 +1425,7 @@ show_stacks_button_balanced.place(x=600, y=40)
 show_stacks_button_generated = ttk.Button(root, text='Show stacks generated', command=show_stacks_generated)
 show_stacks_button_generated.place(x=600, y=70)
 
-show_stacks_button_spent = ttk.Button(root, text='Show_stacks spent', command=show_stacks_spent)
+show_stacks_button_spent = ttk.Button(root, text='Show stacks spent', command=show_stacks_spent)
 show_stacks_button_spent.place(x=600, y=100)
 
 show_fronius_sum_button = ttk.Button(root, text='Show fronius sum', command=show_fronius_sum)
