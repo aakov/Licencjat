@@ -233,11 +233,13 @@ def open_file_fronius_5():
             print(instance.DataOdczytu)
 
 def open_file_custom_daily_report():
-    filename = filedialog.askopenfilename()
+
     subwindow = tk.Toplevel(root)
+
     delimiter_entry_label = tk.Label(subwindow, text='Enter delimiter :')
     delimiter_entry_label.pack()
     delimiter_entry = tk.Entry(subwindow)
+    delimiter_entry.insert(0, ';')
     delimiter_entry.pack()
     date_column_entry_label = tk.Label(subwindow, text='Enter date column :')
     date_column_entry_label.pack()
@@ -259,43 +261,71 @@ def open_file_custom_daily_report():
     power_format_entry_label.pack()
     power_format_entry = tk.Entry(subwindow)
     power_format_entry.pack()
+    def prewiew():
+        filename = filedialog.askopenfilename()
+        with open(filename) as input:
+            csv_reader = csv.reader(input, delimiter=delimiter_entry.get())
+            line_count = 0
+            text1 = None
+            text2 = None
+            for row in csv_reader:
+                if line_count == 0:
+                    text1 = row
+                if line_count == 1:
+                    text2 = row
+                    break
+            line_count += 1
 
-    with open(filename) as input:
-        csv_reader = csv.reader(input, delimiter=delimiter_entry.get())
-        line_count = 0
-        for row in csv_reader:
-            if line_count == 0 or line_count == 1:
-                print(row)
-                line_count += 1
-            else:
-                custom_daily_power_amount = Decimal(str(row[int(power_data_column_entry.get())]))
-                date = row[int(date_column_entry.get())]
-                customDay = CustomDaily(date, custom_daily_power_amount)
-                formated_to_calendar_format_date = datetime.strptime(row[int(power_data_column_entry.get())], date_format_entry.get()).strftime(
-                    "%m/%d/%y")
+            prewiew_label1 = tk.Label(subwindow, text=text1)
+            prewiew_label1.pack()
+            prewiew_label2 = tk.Label(subwindow, text=text2)
+            prewiew_label2.pack()
 
-                available_dates.append(formated_to_calendar_format_date)
-                if report_type_entry.get() == 'Given':
-                    customGivenEnergy.append(customDay)
-                elif report_type_entry.get() == 'Taken':
-                    customTakenEnergy.append(customDay)
-                elif report_type_entry.get() == 'Balanced':
-                    customBalanced.append(customDay)
-                elif report_type_entry.get() == 'Produced':
-                    customProducedEnergy.append(customDay)
-                elif report_type_entry.get() == 'Consumed':
-                    customConsumedEnergy.append(customDay)
+    def analyze_custom_daily_report():
+        filename = filedialog.askopenfilename()
+        with open(filename) as input:
+            csv_reader = csv.reader(input, delimiter=delimiter_entry.get())
+            line_count = 0
+            prewiew_label = tk.Label(subwindow, csv_reader[0 - 1])
+            prewiew_label.pack()
+            for row in csv_reader:
+                if line_count == 0 or line_count == 1:
+                    print(row)
+                    line_count += 1
+                else:
+                    custom_daily_power_amount = Decimal(str(row[int(power_data_column_entry.get())]))
+                    date = row[int(date_column_entry.get())]
+                    customDay = CustomDaily(date, custom_daily_power_amount)
+                    formated_to_calendar_format_date = datetime.strptime(row[int(power_data_column_entry.get())],
+                                                                         date_format_entry.get()).strftime(
+                        "%m/%d/%y")
 
+                    available_dates.append(formated_to_calendar_format_date)
+                    if report_type_entry.get() == 'Given':
+                        customGivenEnergy.append(customDay)
+                    elif report_type_entry.get() == 'Taken':
+                        customTakenEnergy.append(customDay)
+                    elif report_type_entry.get() == 'Balanced':
+                        customBalanced.append(customDay)
+                    elif report_type_entry.get() == 'Produced':
+                        customProducedEnergy.append(customDay)
+                    elif report_type_entry.get() == 'Consumed':
+                        customConsumedEnergy.append(customDay)
 
-                # The date is in [dd.MM.yyyy]
-                # fronius_day = FroniusDaily(row[0], decimal_daily_energy_generation_fronius)
-                # froniusDaily_production_list.append(fronius_day)
-        # parse_Fronius_5(csv_reader, line_count)
+                    # The date is in [dd.MM.yyyy]
+                    # fronius_day = FroniusDaily(row[0], decimal_daily_energy_generation_fronius)
+                    # froniusDaily_production_list.append(fronius_day)
+            # parse_Fronius_5(csv_reader, line_count)
 
         for instance in froniusMinute_prodcution_list:
             print(instance.DataOdczytu)
         unlock_dates()
+    open_file_button = tk.Button(subwindow, text='Open File', command=analyze_custom_daily_report)
+    open_file_button.pack()
+    preview_button = tk.Button(subwindow, text='Preview', command=prewiew)
+    preview_button.pack()
 
+    # subwindow.mainloop()
 
 
 
@@ -1322,16 +1352,35 @@ def solar_energy_prediction_forecast():
         print(f"Error: {response.status_code} - {response.text}")
 
 root = tk.Tk()
-root.geometry("800x1000")
-root.title("Consumption Visualizer")
+root.geometry("1000x800")
 
-enter_start_date_label = tk.Label(root, text='Enter start date :')
+# Menu
+menubar = tk.Menu(root)
+
+# File menu
+file_menu = tk.Menu(menubar, tearoff=0)
+file_menu.add_command(label="Open", command=open_file)
+file_menu.add_separator()
+file_menu.add_command(label="Exit", command=root.quit)
+menubar.add_cascade(label="File", menu=file_menu)
+
+# Edit menu
+edit_menu = tk.Menu(menubar, tearoff=0)
+edit_menu.add_command(label="Cut")
+edit_menu.add_command(label="Copy")
+edit_menu.add_command(label="Paste")
+menubar.add_cascade(label="Edit", menu=edit_menu)
+
+root.config(menu=menubar)
+
+# Left: Calendars
+enter_start_date_label = tk.Label(root, text='Enter start date:')
 enter_start_date_label.place(x=100, y=10)
 
 start_date_entry_cal = Calendar(root, selectmode='day', year=2023, month=1, day=1)
 start_date_entry_cal.place(x=30, y=40)
 
-enter_end_date_label = tk.Label(root, text='Enter end date :')
+enter_end_date_label = tk.Label(root, text='Enter end date:')
 enter_end_date_label.place(x=100, y=270)
 
 end_date_entry_cal = Calendar(root, selectmode='day', year=2023, month=1, day=9)
@@ -1340,84 +1389,89 @@ end_date_entry_cal.place(x=30, y=300)
 start_date_entry_cal.config(state='disabled')
 end_date_entry_cal.config(state='disabled')
 
+# Center: PGE related stuff
 open_button = ttk.Button(root, text='Open PGE report', command=open_file)
-open_button.pack()
+open_button.place(x=300, y=10)
 
 open_button_Fronius_daily = ttk.Button(root, text='Open Fronius report', command=open_file_fronius_daily)
-open_button_Fronius_daily.pack()
+open_button_Fronius_daily.place(x=300, y=40)
 
 open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_5)
-open_button_Fronius_daily_15_minute_button.pack()
+open_button_Fronius_daily_15_minute_button.place(x=300, y=70)
 
 open_button_custom_daily_report = ttk.Button(root, text='Open Custom Report', command=open_file_custom_daily_report)
-open_button_custom_daily_report.pack()
+open_button_custom_daily_report.place(x=300, y=100)
 
 analyze_day_button = ttk.Button(root, text='Analyze day', command=analyze_day)
-analyze_day_button.pack()
+analyze_day_button.place(x=300, y=130)
 
-show_line_graph_button = ttk.Button(root,text='Show_line graph', command=show_line_graph)
-show_line_graph_button.pack()
+# Right: Other widgets
+show_line_graph_button = ttk.Button(root, text='Show line graph', command=show_line_graph)
+show_line_graph_button.place(x=600, y=10)
 
-show_stacks_button_balanced = ttk.Button(root,text='Show_stacks balanced', command=show_stacks_balanced)
-show_stacks_button_balanced.pack()
+show_stacks_button_balanced = ttk.Button(root, text='Show stacks balanced', command=show_stacks_balanced)
+show_stacks_button_balanced.place(x=600, y=40)
 
-show_stacks_button_generated = ttk.Button(root,text='Show_stacks generated', command=show_stacks_generated)
-show_stacks_button_generated.pack()
+show_stacks_button_generated = ttk.Button(root, text='Show stacks generated', command=show_stacks_generated)
+show_stacks_button_generated.place(x=600, y=70)
 
-show_stacks_button_spent = ttk.Button(root,text='Show_stacks spent', command=show_stacks_spent)
-show_stacks_button_spent.pack()
+show_stacks_button_spent = ttk.Button(root, text='Show_stacks spent', command=show_stacks_spent)
+show_stacks_button_spent.place(x=600, y=100)
 
-show_fronius_sum_button = ttk.Button(root,text ='Show_fronius_sum', command=show_fronius_sum)
-show_fronius_sum_button.pack()
+show_fronius_sum_button = ttk.Button(root, text='Show fronius sum', command=show_fronius_sum)
+show_fronius_sum_button.place(x=600, y=130)
 
-show_sum_button = ttk.Button(root,text='Show sum', command=show_sum)
-show_sum_button.pack()
+show_sum_button = ttk.Button(root, text='Show sum', command=show_sum)
+show_sum_button.place(x=600, y=160)
 
-tk.Label(root, text="Price per KwH Spent:").pack()
+tk.Label(root, text="Price per KwH Spent:").place(x=600, y=200)
 energy_price_spent_entry = tk.Entry(root)
-energy_price_spent_entry.pack()
-tk.Label(root, text="Price per KwH Generated:").pack()
+energy_price_spent_entry.place(x=600, y=220)
+
+tk.Label(root, text="Price per KwH Generated:").place(x=600, y=250)
 energy_price_generated_entry = tk.Entry(root)
-energy_price_generated_entry.pack()
+energy_price_generated_entry.place(x=600, y=270)
 
-show_energy_price_button = ttk.Button(root,text='Show energy price spent', command=show_energy_price)
-show_energy_price_button.pack()
+show_energy_price_button = ttk.Button(root, text='Show energy price spent', command=show_energy_price)
+show_energy_price_button.place(x=600, y=300)
 
-show_stacks_Fronius_daily_button = ttk.Button(root,text='Show_stacks_Fronius_daily', command=show_stacks_Fronius_daily)
-show_stacks_Fronius_daily_button.pack(padx=70)
+show_stacks_Fronius_daily_button = ttk.Button(root, text='Show stacks Fronius daily', command=show_stacks_Fronius_daily)
+show_stacks_Fronius_daily_button.place(x=600, y=330)
 
-show_linechart_Fronius_daily_button = ttk.Button(root,text='Show_linechart_Fronius_daily', command=show_linechart_Fronius_daily)
-show_linechart_Fronius_daily_button.pack()
+show_linechart_Fronius_daily_button = ttk.Button(root, text='Show linechart Fronius daily', command=show_linechart_Fronius_daily)
+show_linechart_Fronius_daily_button.place(x=600, y=360)
 
-show_differnce_betweenFronius_and_PGE_daily_button = ttk.Button(root,text='Show_differnce_betweenFronius_and_PGE', command=show_differnce_betweenFronius_and_PGE_daily)
-show_differnce_betweenFronius_and_PGE_daily_button.pack(padx=70)
+show_differnce_betweenFronius_and_PGE_daily_button = ttk.Button(root, text='Show differnce between Fronius and PGE data ', command=show_differnce_betweenFronius_and_PGE_daily)
+show_differnce_betweenFronius_and_PGE_daily_button.place(x=600, y=390)
 
 display_graph_button = ttk.Button(root, text='Display Graph')
+display_graph_button.place(x=600, y=420)
 
 city_label = ttk.Label(root, text="Enter City: ")
-city_label.pack()
+city_label.place(x=600, y=450)
+
 city_entry = ttk.Entry(root, width=20)
-city_entry.insert(0,"Lublin")
-city_entry.pack()
+city_entry.insert(0, "Lublin")
+city_entry.place(x=600, y=470)
 
-show_weather_history_button = ttk.Button(root,text='Show_weather_history', command=show_weather_history)
-show_weather_history_button.pack()
+show_weather_history_button = ttk.Button(root, text='Show weather history', command=show_weather_history)
+show_weather_history_button.place(x=600, y=500)
 
-show_weather_forecast_button = ttk.Button(root,text='Show_7day_weather_forecast', command=show_weather_forecast)
-show_weather_forecast_button.pack()
+show_weather_forecast_button = ttk.Button(root, text='Show 7day weather forecast', command=show_weather_forecast)
+show_weather_forecast_button.place(x=600, y=530)
 
-show_current_weather_button = ttk.Button(root,text='Show_current_weather_button', command=show_current_weather)
-show_current_weather_button.pack()
+show_current_weather_button = ttk.Button(root, text='Show current weather', command=show_current_weather)
+show_current_weather_button.place(x=600, y=560)
 
-show_hourly_usage_linechart_button = ttk.Button(root,text ='Show_hourly_usage_linechart', command=show_hourly_usage_linechart)
-show_hourly_usage_linechart_button.pack()
+show_hourly_usage_linechart_button = ttk.Button(root, text='Show hourly usage linechart', command=show_hourly_usage_linechart)
+show_hourly_usage_linechart_button.place(x=600, y=590)
 
-tk.Label(root, text="Enter plant power:").pack()
+tk.Label(root, text="Enter plant power:").place(x=600, y=620)
 plant_power_entry = tk.Entry(root)
-plant_power_entry.pack()
+plant_power_entry.place(x=600, y=640)
 
 solar_energy_prediction_forecast_button = ttk.Button(root, text='Solar energy prediction forecast', command=solar_energy_prediction_forecast)
-solar_energy_prediction_forecast_button.pack()
+solar_energy_prediction_forecast_button.place(x=600, y=670)
 
 # L1 = Label(root, text="Enter Date")
 # L1.pack()
