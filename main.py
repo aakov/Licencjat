@@ -527,7 +527,8 @@ def parse_Fronius(csv_reader,line_count):
             #The date is in [dd.MM.yyyy]
             fronius_day = FroniusDaily(row[0], decimal_daily_energy_generation_fronius)
             froniusDaily_production_list.append(fronius_day)
-            formated_to_calendar_format_date = row[0].strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%m/%d/%y")
+            formated_to_calendar_format_date = datetime.strptime(row[0], "%d.%m.%Y").strftime("%m/%d/%y")
+            # formated_to_calendar_format_date = row[0].strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%m/%d/%y")
             available_dates.append(formated_to_calendar_format_date)
 
 def parse_Fronius_5(csv_reader, line_count):
@@ -1286,21 +1287,32 @@ def show_differnce_betweenFronius_and_PGE_daily():
     plt.show()
 
 def get_coord():
-    lat, lon = None, None
+    # lat, lon = None, None
     city = city_entry.get()
+    print(city)
     base_url = "https://nominatim.openstreetmap.org/search"
-    params = {"q": city, "format": "json"}
-    try:
-        response = requests.get(base_url, params=params)
+    params = {
+        'q': city,
+        'format': 'json',
+        'limit': 1
+    }
+    response = requests.get(base_url, params=params)
+    if response.status_code == 200:
         data = response.json()
-        if response.status_code == 200 and data:
-            first_result = data[0]
-            lat, lon = float(first_result["lat"]), float(first_result["lon"])
+
+        # Check if any result was returned
+        if data:
+            # Extract latitude and longitude from the first result
+            latitude = data[0]['lat']
+            longitude = data[0]['lon']
+            print(latitude)
+            print(longitude)
+            return latitude, longitude
         else:
-            print("Error: Unable to retrieve coordinates enter the name of the city again.")
-        return lat, lon
-    except Exception as e:
-        print(e)
+            return None, None
+    else:
+        # If the request was not successful, return None
+        return None, None
 
 def solar_energy_prediction_forecast():
     lat, lon = get_coord()
@@ -1485,6 +1497,8 @@ plant_power_entry.place(x=640, y=640)
 solar_energy_prediction_forecast_button = ttk.Button(root, text='Solar energy prediction forecast', command=solar_energy_prediction_forecast, width=button_size1)
 solar_energy_prediction_forecast_button.place(x=640, y=670)
 
+get_coord_button = ttk.Button(root, text='Get coord', command=get_coord, width=button_size1)
+get_coord_button.place(x=640, y=700)
 # L1 = Label(root, text="Enter Date")
 # L1.pack()
 # dateEntry = Entry(root)
