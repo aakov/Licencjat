@@ -328,8 +328,26 @@ def open_file_custom_daily_report():
     # subwindow.mainloop()
 
 
+def preview():
+    preview_subwindow = tk.Toplevel(root)
+    filename = filedialog.askopenfilename()
+    with open(filename) as input_file:
+        csv_reader = csv.reader(input_file)
+        line_count = 0
+        text1 = None
+        text2 = None
+        for row in csv_reader:
+            if line_count == 0:
+                text1 = row
+            elif line_count == 1:
+                text2 = row
+                break
+            line_count += 1
 
-# Function to find objects by parameter
+        preview_label1 = tk.Label(preview_subwindow, text=text1)
+        preview_label1.pack()
+        preview_label2 = tk.Label(preview_subwindow, text=text2)
+        preview_label2.pack()
 def find_by_date(objects_list, date):
     for obj in objects_list:
         if obj.DataOdczytu == date:
@@ -1300,9 +1318,7 @@ def get_coord():
     if response.status_code == 200:
         data = response.json()
 
-        # Check if any result was returned
         if data:
-            # Extract latitude and longitude from the first result
             latitude = data[0]['lat']
             longitude = data[0]['lon']
             print(latitude)
@@ -1311,7 +1327,6 @@ def get_coord():
         else:
             return None, None
     else:
-        # If the request was not successful, return None
         return None, None
 
 def solar_energy_prediction_forecast():
@@ -1427,6 +1442,8 @@ open_button_custom_daily_report.place(x=340, y=130)
 analyze_day_button = ttk.Button(root, text='Analyze day', command=analyze_day, width=button_size, style='Custom.TButton')
 analyze_day_button.place(x=340, y=160)
 
+preview_report_button = ttk.Button(root, text='Preview report', command=preview, width=button_size, style='Custom.TButton')
+preview_report_button.place(x=340, y=190)
 # Right: Other widgets
 
 button_size1 = 30
