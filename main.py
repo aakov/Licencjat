@@ -640,13 +640,14 @@ def show_sum():
     print(startDate)
     plt.show()
 
+global called
 def show_energy_price():
     pricePerKwHSpent = Decimal(energy_price_spent_entry.get())
     pricePerKwHGenerated = Decimal(energy_price_generated_entry.get())
 
     startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
     endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
-
+    numberOfDays = 0
     startDateReached = False
     balancedSum = 0
     print(balanced[0].DailySum)
@@ -655,6 +656,7 @@ def show_energy_price():
             startDateReached = True
         if startDateReached == True:
             balancedSum += i.DailySum
+            numberOfDays+=1
         if endDate == i.DataOdczytu:
             break
 
@@ -679,15 +681,13 @@ def show_energy_price():
         if endDate == i.DataOdczytu:
             break
 
-    print(balancedSum)
-    print(generatedSum)
-    print(spentSum)
-
     priceGenerated = generatedSum*pricePerKwHGenerated
     priceSpent = spentSum*pricePerKwHSpent
     priceFinal = priceSpent-priceGenerated
-    # print(priceSpent)
 
+    called, fixedDailyCharge, fixedHourlyCharge
+    fixedChargePriceModifier = numberOfDays*fixedDailyCharge + fixedHourlyCharge*numberOfDays*24
+    priceFinal = priceFinal+fixedChargePriceModifier
     values = [priceFinal, priceGenerated, priceSpent]
     labels = ['Cena finalna ', 'Cena energi oddanej ', 'Cena energii pobranej ']
     colors = ['blue', 'green', 'red']
@@ -709,6 +709,60 @@ def show_energy_price():
     # print(generated[0].DailySum)
     # print(startDate)
     plt.show()
+
+def configure_price_settings():
+    global called
+    called = True
+    # Nowe funkcje moga byc dodane w razie potrzeby
+    # fixedHourlyCharge, fixedDailyCharge, offPeakRate, peakRate
+    subwindow = Toplevel(root)
+    subwindow.title("Ceny")
+    peakRate_entry = ttk.Entry(subwindow)
+    peakRate_entry.pack()
+    offPeakRate_entry = ttk.Entry(subwindow)
+    offPeakRate_entry.pack()
+    fixedDailyCharge_entry = ttk.Entry(subwindow)
+    ttk.Label(subwindow, text="Opłata stała dzienna").pack()
+    fixedDailyCharge_entry.pack()
+    fixedDailyCharge_entry.insert(0,"0")
+    ttk.Label(subwindow, text="Opłata stała pogodzinna ").pack()
+    fixedHourlyCharge_entry = ttk.Entry(subwindow)
+    fixedHourlyCharge_entry.pack()
+    fixedHourlyCharge_entry.insert(0,"0")
+
+    peakRate_entry.insert(0,"1.5")
+    offPeakRate_entry.insert(0,"0.75")
+    global cena_zalezna_od_godziny
+    cena_zalezna_od_godziny = BooleanVar()
+    cena_zalezna_od_godziny_checkbox = ttk.Checkbutton(subwindow, text="Cena zalezna od godziny", variable=cena_zalezna_od_godziny)
+    cena_zalezna_od_godziny_checkbox.pack()
+
+    kary_za_prekroczenie_limitu = ttk.Checkbutton(subwindow, text="Kary za prekroczenie limitu")
+    kary_za_prekroczenie_limitu.pack()
+
+    # stawka dzienna, nocna, za oddanie, pobranie energii,
+    ttk.Label(subwindow, text="Cena za pobranie energii z sieci w godzinach dziennych ").pack()
+    dzienna_stawka_pobrane_entry = ttk.Entry(subwindow)
+    dzienna_stawka_pobrane_entry.pack()
+    ttk.Label(subwindow, text="Cena za pobranie energii z sieci w godzinach nocnych").pack()
+    nocna_stawka_pobrane_entry = ttk.Entry(subwindow)
+    nocna_stawka_pobrane_entry.pack()
+    ttk.Label(subwindow, text="Cena za oddanie energii do sieci w godzinach dziennych").pack()
+    dzienna_stawka_oddane_entry = ttk.Entry(subwindow)
+    dzienna_stawka_oddane_entry.pack()
+    ttk.Label(subwindow, text="Cena za oddanie energii do sieci w godzinach nocnych").pack()
+    nocna_stawka_oddane_entry = ttk.Entry(subwindow)
+    nocna_stawka_oddane_entry.pack()
+
+    global fixedDailyCharge
+    fixedDailyCharge = Decimal(fixedDailyCharge_entry.get())
+    global fixedHourlyCharge
+    fixedHourlyCharge = Decimal(fixedHourlyCharge_entry.get())
+    # save_price_settings_button = ttk.Button(subwindow, text="Save price settings", command=save_price_settings)
+    # save_price_settings_button.pack()
+    cena_zalezna_od_godziny = BooleanVar()
+
+
 
 def show_stacks_balanced():
     startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
@@ -1016,9 +1070,6 @@ def show_current_weather():
     temp_label = tk.Label(subwindow, text=str(round(current_temperature_2m))+'°C')
     temp_label.pack()
     subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
-
-
-
 
 def show_weather_forecast():
     lat, lon = get_coord()
@@ -1464,7 +1515,7 @@ show_fronius_sum_button.place(x=640, y=130)
 
 show_sum_button = ttk.Button(root, text='Show sum', command=show_sum, width=button_size1)
 show_sum_button.place(x=640, y=160)
-
+tk.Label(root, text="Default pricing model is W11 without additional costs").place(x=640, y=180)
 tk.Label(root, text="Price per KwH Spent:").place(x=640, y=200)
 energy_price_spent_entry = tk.Entry(root)
 energy_price_spent_entry.place(x=640, y=220)
@@ -1475,6 +1526,8 @@ energy_price_generated_entry.place(x=640, y=270)
 
 show_energy_price_button = ttk.Button(root, text='Show energy price spent', command=show_energy_price, width=button_size1)
 show_energy_price_button.place(x=640, y=300)
+configure_energy_price_settings_button = ttk.Button(root, text='Modify energy price spent', command=configure_price_settings, width=button_size1)
+configure_energy_price_settings_button.place(x=640, y=370)
 
 show_stacks_Fronius_daily_button = ttk.Button(root, text='Show stacks Fronius daily', command=show_stacks_Fronius_daily, width=button_size1)
 show_stacks_Fronius_daily_button.place(x=640, y=330)
