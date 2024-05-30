@@ -641,7 +641,15 @@ def show_sum():
     plt.show()
 
 global called
+called = False
+global cena_zalezna_od_godziny
+cena_zalezna_od_godziny = False
+global fixedDailyCharge
+fixedDailyCharge = Decimal()
+global fixedHourlyCharge
+fixedHourlyCharge = Decimal()
 def show_energy_price():
+
     pricePerKwHSpent = Decimal(energy_price_spent_entry.get())
     pricePerKwHGenerated = Decimal(energy_price_generated_entry.get())
 
@@ -685,7 +693,7 @@ def show_energy_price():
     priceSpent = spentSum*pricePerKwHSpent
     priceFinal = priceSpent-priceGenerated
 
-    called, fixedDailyCharge, fixedHourlyCharge
+    print(fixedDailyCharge)
     fixedChargePriceModifier = numberOfDays*fixedDailyCharge + fixedHourlyCharge*numberOfDays*24
     priceFinal = priceFinal+fixedChargePriceModifier
     values = [priceFinal, priceGenerated, priceSpent]
@@ -711,7 +719,7 @@ def show_energy_price():
     plt.show()
 
 def configure_price_settings():
-    global called
+    global fixedDailyCharge
     called = True
     # Nowe funkcje moga byc dodane w razie potrzeby
     # fixedHourlyCharge, fixedDailyCharge, offPeakRate, peakRate
@@ -724,15 +732,14 @@ def configure_price_settings():
     fixedDailyCharge_entry = ttk.Entry(subwindow)
     ttk.Label(subwindow, text="Opłata stała dzienna").pack()
     fixedDailyCharge_entry.pack()
-    fixedDailyCharge_entry.insert(0,"0")
+    # fixedDailyCharge_entry.insert(0,"0")
     ttk.Label(subwindow, text="Opłata stała pogodzinna ").pack()
     fixedHourlyCharge_entry = ttk.Entry(subwindow)
     fixedHourlyCharge_entry.pack()
-    fixedHourlyCharge_entry.insert(0,"0")
+    # fixedHourlyCharge_entry.insert(0,"0")
 
     peakRate_entry.insert(0,"1.5")
     offPeakRate_entry.insert(0,"0.75")
-    global cena_zalezna_od_godziny
     cena_zalezna_od_godziny = BooleanVar()
     cena_zalezna_od_godziny_checkbox = ttk.Checkbutton(subwindow, text="Cena zalezna od godziny", variable=cena_zalezna_od_godziny)
     cena_zalezna_od_godziny_checkbox.pack()
@@ -754,12 +761,18 @@ def configure_price_settings():
     nocna_stawka_oddane_entry = ttk.Entry(subwindow)
     nocna_stawka_oddane_entry.pack()
 
-    global fixedDailyCharge
-    fixedDailyCharge = Decimal(fixedDailyCharge_entry.get())
-    global fixedHourlyCharge
-    fixedHourlyCharge = Decimal(fixedHourlyCharge_entry.get())
-    # save_price_settings_button = ttk.Button(subwindow, text="Save price settings", command=save_price_settings)
-    # save_price_settings_button.pack()
+
+    def save_price_settings():
+        global fixedDailyCharge
+        fixedDailyCharge = Decimal(fixedDailyCharge_entry.get())
+        print(fixedDailyCharge)
+        fixedHourlyCharge = Decimal(fixedHourlyCharge_entry.get())
+    save_price_settings_button = ttk.Button(subwindow, text="Save price settings", command=save_price_settings)
+    save_price_settings_button.pack()
+    def display_price_settings():
+        print(fixedDailyCharge)
+    display_price_settings_button = ttk.Button(subwindow, text="Display price settings", command=display_price_settings)
+    display_price_settings_button.pack()
     cena_zalezna_od_godziny = BooleanVar()
 
 
