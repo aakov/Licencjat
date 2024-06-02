@@ -21,6 +21,8 @@ from tkcalendar import Calendar
 import matplotlib.pyplot as plt
 from decimal import Decimal
 import numpy as np
+import matplotlib.dates as mdates
+
 
 class Day:
     def __init__(self, KodPP, DataOdczytu, Kierunek, HourUsageList):
@@ -29,6 +31,10 @@ class Day:
         self.Kierunek = Kierunek
         self.HourUsageList = HourUsageList
         self.DailySum = sum(HourUsageList)
+        self.daily_hours_sum = sum(HourUsageList[7:19])
+        self.nighltly_hours_sum = sum(HourUsageList[20:8:-1])
+        self.daily_average = self.DailySum / 24
+        # self.daily_median = np.median(HourUsageList)
 
 class FroniusDaily:
     def __init__(self, DataOdczytu, Daily_generated):
@@ -119,14 +125,7 @@ customDay = CustomDaily('01.01.2023', 0.0)
 customConsumedEnergy.append(customDay)
 customConsumedEnergy.clear()
 
-
-
-
-# label = tk.Label(text="Consumption Visualizer")
-# label.pack()
-
-
-
+#To jest potrzebne bo inaczej nie da sie normalnie poierac wartosci z tablic
 
 # bg_image = Image.open("bg_pv_hd.jpg")
 # bg_photo = ImageTk.PhotoImage(bg_image)
@@ -136,21 +135,6 @@ customConsumedEnergy.clear()
 
 # frame1 = Frame(root)
 # frame1.pack(pady = 20)
-
-# enter_start_date_label = tk.Label(root, text='Enter start date :')
-# enter_start_date_label.place(x=100, y=10)
-#
-# start_date_entry_cal = Calendar(root, selectmode='day', year=2023, month=1, day=1)
-# start_date_entry_cal.place(x=30, y=40)
-#
-# enter_end_date_label = tk.Label(root, text='Enter end date :')
-# enter_end_date_label.place(x=100, y=270)
-#
-# end_date_entry_cal = Calendar(root, selectmode='day', year=2023, month=1, day=9)
-# end_date_entry_cal.place(x=30, y=300)
-#
-# start_date_entry_cal.config(state='disabled')
-# end_date_entry_cal.config(state='disabled')
 
 global available_dates
 available_dates = []
@@ -168,35 +152,6 @@ def unlock_dates():
         # min_date = datetime.strptime(min_date, "%m/%d/%y").date()
         # max_date = datetime.strptime(max_date, "%m/%d/%y").date()
         # print(date_str)
-
-
-# Label(root, text= "Choose a Date", background= 'gray61', foreground="white").pack() #padx=20,pady=20
-# #Create a Calendar using DateEntry
-# class DateEntry:
-#     pass
-#
-#
-# cal = Calendar(root, selectmode='day',
-#                year=2020, month=5,
-#                day=22)
-#
-# cal.pack(pady=20)
-#
-#
-# def grad_date():
-#     date.config(text="Selected Date is: " + cal.get_date())
-#     print(cal.get_date())
-#
-#
-# # Add Button and Label
-# Button(root, text="Get Date", command=grad_date).pack()
-#
-# date = Label(root, text="")
-# date.pack()
-
-
-#To jest potrzebne bo inaczej nie da sie normalnie poierac wartosci z tablic
-
 
 def open_file():
     # global filename
@@ -429,8 +384,6 @@ def analyze_day():
     show_weather_temp_button.pack()
     subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
 
-
-
 def show_weather_hourly_1day(date):
     date = datetime.strptime(date, "%m/%d/%y").strftime("%Y-%m-%d")
     cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
@@ -541,7 +494,7 @@ def parse_Fronius(csv_reader,line_count):
             print(row)
             line_count +=1
         else:
-            decimal_daily_energy_generation_fronius = Decimal(str(row[1]))
+            decimal_daily_energy_generation_fronius = Decimal(row[1])
             #The date is in [dd.MM.yyyy]
             fronius_day = FroniusDaily(row[0], decimal_daily_energy_generation_fronius)
             froniusDaily_production_list.append(fronius_day)
@@ -640,18 +593,31 @@ def show_sum():
     print(startDate)
     plt.show()
 
-global called
-called = False
+global configure_price_settings_called
+configure_price_settings_called = False
 global cena_zalezna_od_godziny
 cena_zalezna_od_godziny = False
+global fixedChargeExists
+fixedChargeExists = False
 global fixedDailyCharge
 fixedDailyCharge = Decimal()
 global fixedHourlyCharge
 fixedHourlyCharge = Decimal()
+global dzienna_stawka_pobrane, dzienna_stawka_oddane, nocna_stawka_pobrane, nocna_stawka_oddane
+global energy_limit_exists
+energy_limit_exists = False
+global energy_bought_limit, energy_sold_limit
+energy_bought_limit = Decimal()
+energy_sold_limit = Decimal()
+# Moze byc nagroda lub kara jesli uzytkownik wpisze liczbe ujemna
+global buying_price_reward_or_penalty_after_limit, selling_price_reward_or_penalty_after_limit
+buying_price_reward_or_penalty_after_limit = Decimal(0)
+selling_price_reward_or_penalty_after_limit  = Decimal(0)
+
 def show_energy_price():
 
-    pricePerKwHSpent = Decimal(energy_price_spent_entry.get())
-    pricePerKwHGenerated = Decimal(energy_price_generated_entry.get())
+    pricePerKwHSpent = 0
+    pricePerKwHGenerated = 0
 
     startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
     endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
@@ -659,46 +625,93 @@ def show_energy_price():
     startDateReached = False
     balancedSum = 0
     print(balanced[0].DailySum)
+    balanced_processed = []
+    energySold_processed = []
+    energyBought_processed = []
+
     for i in balanced:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
             balancedSum += i.DailySum
             numberOfDays+=1
+            balanced_processed.append(i)
         if endDate == i.DataOdczytu:
             break
-
     startDateReached = False
-    generatedSum = 0
+    energySoldSum = 0
     for i in energySold:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
-            generatedSum += i.DailySum
+            energySoldSum += i.DailySum
+            energySold_processed.append(i)
         if endDate == i.DataOdczytu:
             break
-
-
     startDateReached = False
-    spentSum = 0
+    energyBoughtSum = 0
     for i in energyBought:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
-            spentSum += i.DailySum
+            energyBoughtSum += i.DailySum
+            energyBought_processed.append(i)
         if endDate == i.DataOdczytu:
             break
+    if(configure_price_settings_called == False):
+        pricePerKwHSpent = Decimal(energy_price_spent_entry.get())
+        pricePerKwHGenerated = Decimal(energy_price_generated_entry.get())
 
-    priceGenerated = generatedSum*pricePerKwHGenerated
-    priceSpent = spentSum*pricePerKwHSpent
-    priceFinal = priceSpent-priceGenerated
 
-    print(fixedDailyCharge)
-    fixedChargePriceModifier = numberOfDays*fixedDailyCharge + fixedHourlyCharge*numberOfDays*24
-    priceFinal = priceFinal+fixedChargePriceModifier
-    values = [priceFinal, priceGenerated, priceSpent]
-    labels = ['Cena finalna ', 'Cena energi oddanej ', 'Cena energii pobranej ']
+    priceSold = energySoldSum * pricePerKwHGenerated
+    priceBought = energyBoughtSum * pricePerKwHSpent
+    priceFinal = priceBought - priceSold
+
+
+    if(configure_price_settings_called == True):
+        print(cena_zalezna_od_godziny)
+        if(cena_zalezna_od_godziny == True):
+           balanced_day_price_sum = 0
+           balanced_night_price_sum = 0
+           sold_day_price_sum = 0
+           sold_night_price_sum = 0
+           bought_day_price_sum = 0
+           bought_night_price_sum = 0
+           priceSold = 0
+           priceBought = 0
+           priceFinal = 0
+           for i in balanced_processed:
+               balanced_day_price_sum += i.daily_hours_sum
+               balanced_night_price_sum += i.nighltly_hours_sum
+           for i in energySold_processed:
+               sold_day_price_sum += i.daily_hours_sum
+               sold_night_price_sum += i.nighltly_hours_sum
+           for i in energyBought_processed:
+               bought_day_price_sum += i.daily_hours_sum
+               bought_night_price_sum += i.nighltly_hours_sum
+           priceBought = dzienna_stawka_pobrane*bought_day_price_sum + nocna_stawka_pobrane*bought_night_price_sum
+           priceSold = dzienna_stawka_oddane*sold_day_price_sum + nocna_stawka_oddane*sold_night_price_sum
+           priceFinal = priceBought - priceSold
+           print(priceBought)
+           print(priceSold)
+        if fixedChargeExists == True:
+            fixedChargePriceModifier = numberOfDays * fixedDailyCharge + fixedHourlyCharge * numberOfDays * 24
+            priceFinal = priceFinal + fixedChargePriceModifier
+        if energy_limit_exists == True:
+            if energySoldSum > energy_sold_limit:
+                priceSold = priceSold + selling_price_reward_or_penalty_after_limit
+            if energyBoughtSum > energy_bought_limit:
+                priceBought = buying_price_reward_or_penalty_after_limit + priceBought
+            priceFinal = priceBought - priceSold
+    values = [priceFinal, priceSold, priceBought]
+    labels = ['Cena finalna', 'Cena energi oddanej', 'Cena energii pobranej']
     colors = ['blue', 'green', 'red']
+    if fixedChargeExists == True:
+        values.append(fixedChargePriceModifier)
+        labels.append('Opłata stała')
+    if energy_limit_exists == True:
+        labels.append('Koszty związane z prekroczeniem limitów energii')
+        values.append(buying_price_reward_or_penalty_after_limit-selling_price_reward_or_penalty_after_limit)
     # Create a bar chart
     bars = plt.bar(labels, values, color=colors)
 
@@ -719,16 +732,26 @@ def show_energy_price():
     plt.show()
 
 def configure_price_settings():
-    global fixedDailyCharge
-    called = True
+    global fixedDailyCharge, configure_price_settings_called, fixedChargeExists
+    global dzienna_stawka_pobrane, dzienna_stawka_oddane, nocna_stawka_pobrane, nocna_stawka_oddane
+    global cena_zalezna_od_godziny
+    global energy_limit_exists
+    global energy_bought_limit, energy_sold_limit
+    global buying_price_reward_or_penalty_after_limit, selling_price_reward_or_penalty_after_limit
+
     # Nowe funkcje moga byc dodane w razie potrzeby
     # fixedHourlyCharge, fixedDailyCharge, offPeakRate, peakRate
     subwindow = Toplevel(root)
     subwindow.title("Ceny")
-    peakRate_entry = ttk.Entry(subwindow)
-    peakRate_entry.pack()
-    offPeakRate_entry = ttk.Entry(subwindow)
-    offPeakRate_entry.pack()
+    # peakRate_entry = ttk.Entry(subwindow)
+    # peakRate_entry.pack()
+    # offPeakRate_entry = ttk.Entry(subwindow)
+    # offPeakRate_entry.pack()
+
+    fixedChargeExistsBooleanVar = BooleanVar()
+    fixedChargeExists_checkbox = ttk.Checkbutton(subwindow, text="Istnieje opłata stała",
+                                                 variable=fixedChargeExistsBooleanVar)
+    fixedChargeExists_checkbox.pack()
     fixedDailyCharge_entry = ttk.Entry(subwindow)
     ttk.Label(subwindow, text="Opłata stała dzienna").pack()
     fixedDailyCharge_entry.pack()
@@ -738,14 +761,12 @@ def configure_price_settings():
     fixedHourlyCharge_entry.pack()
     # fixedHourlyCharge_entry.insert(0,"0")
 
-    peakRate_entry.insert(0,"1.5")
-    offPeakRate_entry.insert(0,"0.75")
-    cena_zalezna_od_godziny = BooleanVar()
-    cena_zalezna_od_godziny_checkbox = ttk.Checkbutton(subwindow, text="Cena zalezna od godziny", variable=cena_zalezna_od_godziny)
+    # peakRate_entry.insert(0,"1.5")
+    # offPeakRate_entry.insert(0,"0.75")
+    cena_zalezna_od_godzinyBooleanVar = BooleanVar()
+    cena_zalezna_od_godziny_checkbox = ttk.Checkbutton(subwindow, text="Cena zalezna od godziny",
+                                                       variable=cena_zalezna_od_godzinyBooleanVar)
     cena_zalezna_od_godziny_checkbox.pack()
-
-    kary_za_prekroczenie_limitu = ttk.Checkbutton(subwindow, text="Kary za prekroczenie limitu")
-    kary_za_prekroczenie_limitu.pack()
 
     # stawka dzienna, nocna, za oddanie, pobranie energii,
     ttk.Label(subwindow, text="Cena za pobranie energii z sieci w godzinach dziennych ").pack()
@@ -761,20 +782,57 @@ def configure_price_settings():
     nocna_stawka_oddane_entry = ttk.Entry(subwindow)
     nocna_stawka_oddane_entry.pack()
 
+    energy_limit_existsBooleanVar = BooleanVar()
+    energy_limit_exists_checkbox = ttk.Checkbutton(subwindow, text="Kary za prekroczenie limitu",
+                                                           variable=energy_limit_existsBooleanVar)
+    energy_limit_exists_checkbox.pack()
 
+    ttk.Label(subwindow, text="Limit pobrania energii").pack()
+    energy_bought_limit_entry = ttk.Entry(subwindow)
+    energy_bought_limit_entry.pack()
+    ttk.Label(subwindow, text="Limit oddania energii").pack()
+    energy_sold_limit_entry = ttk.Entry(subwindow)
+    energy_sold_limit_entry.pack()
+    ttk.Label(subwindow, text="Kara lub nagroda za przekroczenie limitu oddania energii").pack()
+    selling_price_reward_or_penalty_after_limit_entry = ttk.Entry(subwindow)
+    selling_price_reward_or_penalty_after_limit_entry.pack()
+    ttk.Label(subwindow, text="Kara lub nagroda za przekroczenie limitu pobrania energii").pack()
+    buying_price_reward_or_penalty_after_limit_entry = ttk.Entry(subwindow)
+    buying_price_reward_or_penalty_after_limit_entry.pack()
     def save_price_settings():
-        global fixedDailyCharge
-        fixedDailyCharge = Decimal(fixedDailyCharge_entry.get())
-        print(fixedDailyCharge)
-        fixedHourlyCharge = Decimal(fixedHourlyCharge_entry.get())
+        global configure_price_settings_called
+        configure_price_settings_called= True
+        if fixedChargeExistsBooleanVar.get() == True:
+            global fixedDailyCharge, fixedHourlyCharge
+            global fixedChargeExists
+            fixedChargeExists = fixedChargeExistsBooleanVar.get()
+            fixedDailyCharge = Decimal(fixedDailyCharge_entry.get())
+            print(fixedDailyCharge)
+            fixedHourlyCharge = Decimal(fixedHourlyCharge_entry.get())
+        if cena_zalezna_od_godzinyBooleanVar.get() == True:
+            global dzienna_stawka_pobrane, dzienna_stawka_oddane, nocna_stawka_pobrane, nocna_stawka_oddane
+            global cena_zalezna_od_godziny
+            cena_zalezna_od_godziny = cena_zalezna_od_godzinyBooleanVar.get()
+            print(cena_zalezna_od_godziny)
+            dzienna_stawka_pobrane = Decimal(dzienna_stawka_pobrane_entry.get())
+            nocna_stawka_pobrane = Decimal(nocna_stawka_pobrane_entry.get())
+            dzienna_stawka_oddane = Decimal(dzienna_stawka_oddane_entry.get())
+            nocna_stawka_oddane = Decimal(nocna_stawka_oddane_entry.get())
+        if energy_limit_existsBooleanVar.get() == True:
+            global buying_price_reward_or_penalty_after_limit, selling_price_reward_or_penalty_after_limit
+            global energy_limit_exists
+            global energy_bought_limit, energy_sold_limit
+            buying_price_reward_or_penalty_after_limit = Decimal(buying_price_reward_or_penalty_after_limit_entry.get())
+            selling_price_reward_or_penalty_after_limit = Decimal(selling_price_reward_or_penalty_after_limit_entry.get())
+            energy_limit_exists = energy_limit_existsBooleanVar.get()
+            energy_bought_limit = Decimal(energy_bought_limit_entry.get())
+            energy_sold_limit = Decimal(energy_sold_limit_entry.get())
     save_price_settings_button = ttk.Button(subwindow, text="Save price settings", command=save_price_settings)
     save_price_settings_button.pack()
     def display_price_settings():
         print(fixedDailyCharge)
     display_price_settings_button = ttk.Button(subwindow, text="Display price settings", command=display_price_settings)
     display_price_settings_button.pack()
-    cena_zalezna_od_godziny = BooleanVar()
-
 
 
 def show_stacks_balanced():
@@ -924,17 +982,32 @@ def show_line_graph():
             balanced_dateList.append(i.DataOdczytu)
         if i.DataOdczytu == endDate:
             break
-    plt.plot(balanced_dateList,balanced_dailySumList)
-    plt.plot(generated_dateList, generated_dailySumList)
-    plt.plot(spent_dateList, spent_dailySumList)
+
+    balanced_dateList = [datetime.strptime(date, '%Y%m%d') for date in balanced_dateList]
+    generated_dateList = [datetime.strptime(date, '%Y%m%d') for date in generated_dateList]
+    spent_dateList = [datetime.strptime(date, '%Y%m%d') for date in spent_dateList]
+
+    plt.plot(balanced_dateList, balanced_dailySumList, label='Balanced Daily Sum')
+    plt.plot(generated_dateList, generated_dailySumList, label='Generated Daily Sum')
+    plt.plot(spent_dateList, spent_dailySumList, label='Spent Daily Sum')
+
+    
+    plt.title('Daily Sums Over Time')
+    plt.xlabel('Date')
+    plt.ylabel('Daily Sum')
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.gcf().autofmt_xdate()
+
+    plt.legend()
     plt.show()
 
 def show_weather_history():
     lat, lon = get_coord()
-    startDate = start_date_entry_cal.get_date()
-    endDate = end_date_entry_cal.get_date()
-    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%Y%m%d").strftime("%Y-%m-%d")
-    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%Y%m%d").strftime("%Y-%m-%d")
+    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y-%m-%d")
+    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y-%m-%d")
+    print(start_date)
     # Kod wzięty z dokimentacji Historical Weather API
     cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
@@ -952,7 +1025,6 @@ def show_weather_history():
         "timezone": "Europe/Berlin"
     }
     responses = openmeteo.weather_api(url, params=params)
-
     # Process first location. Add a for-loop for multiple locations or weather models
     response = responses[0]
     print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
@@ -1064,7 +1136,7 @@ def show_current_weather():
     print(f"Current cloud_cover {current_cloud_cover}")
 
     description = interpret_weather_code(str(int(current_weather_code)))
-    sunny_image = Image.open("sunny.jpg")
+    sunny_image = Image.open("sunny.png")
     sunny_image = sunny_image.resize((100, 100))
     sunny_image_tk = ImageTk.PhotoImage(sunny_image)
     moon_image = Image.open("moon.png")
@@ -1254,10 +1326,12 @@ def show_hourly_usage_linechart():
     plt.show()
 
 def show_fronius_sum():
-    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
-    # print(start_date)
-    # print(end_date)
+    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+
+    print(start_date)
+    print(end_date)
+    print(froniusDaily_production_list[0].Daily_generated)
     sum_fronius = 0
     startDateReached = False
     for i in froniusDaily_production_list:
@@ -1276,8 +1350,9 @@ def show_fronius_sum():
     subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
 
 def show_stacks_Fronius_daily():
-    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
+    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+
 
     dailyProduction_list = []
     dateList = []
@@ -1300,8 +1375,8 @@ def show_stacks_Fronius_daily():
     plt.show()
 
 def show_linechart_Fronius_daily():
-    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
+    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
 
     dailyProduction_list = []
     dateList = []
@@ -1322,8 +1397,9 @@ def show_linechart_Fronius_daily():
 def show_differnce_betweenFronius_and_PGE_daily():
     startDate = start_date_entry_cal.get_date()
     endDate = end_date_entry_cal.get_date()
-    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%Y%m%d").strftime("%d.%m.%Y")
+    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+
 
     startDateReached = False
     generatedSum = 0
@@ -1368,6 +1444,7 @@ def show_differnce_betweenFronius_and_PGE_daily():
     print(startDate)
     plt.show()
 
+# To czasami randomowo przestaje dzialać, jest problem po stronia API
 def get_coord():
     # lat, lon = None, None
     city = city_entry.get()
@@ -1528,7 +1605,7 @@ show_fronius_sum_button.place(x=640, y=130)
 
 show_sum_button = ttk.Button(root, text='Show sum', command=show_sum, width=button_size1)
 show_sum_button.place(x=640, y=160)
-tk.Label(root, text="Default pricing model is W11 without additional costs").place(x=640, y=180)
+# tk.Label(root, text="Default pricing model is W11 without additional costs").place(x=640, y=180)
 tk.Label(root, text="Price per KwH Spent:").place(x=640, y=200)
 energy_price_spent_entry = tk.Entry(root)
 energy_price_spent_entry.place(x=640, y=220)
@@ -1539,8 +1616,8 @@ energy_price_generated_entry.place(x=640, y=270)
 
 show_energy_price_button = ttk.Button(root, text='Show energy price spent', command=show_energy_price, width=button_size1)
 show_energy_price_button.place(x=640, y=300)
-configure_energy_price_settings_button = ttk.Button(root, text='Modify energy price spent', command=configure_price_settings, width=button_size1)
-configure_energy_price_settings_button.place(x=640, y=370)
+configure_energy_price_settings_button = ttk.Button(root, text='Add additional price settings ', command=configure_price_settings, width=button_size1)
+configure_energy_price_settings_button.place(x=400, y=300)
 
 show_stacks_Fronius_daily_button = ttk.Button(root, text='Show stacks Fronius daily', command=show_stacks_Fronius_daily, width=button_size1)
 show_stacks_Fronius_daily_button.place(x=640, y=330)
