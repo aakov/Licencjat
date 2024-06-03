@@ -840,12 +840,7 @@ def show_stacks_balanced():
     endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
 
     balanced_dailySumList = []
-    generated_dailySumList = []
-    spent_dailySumList = []
     balanced_dateList = []
-    generated_dateList = []
-    spent_dateList = []
-    #count = 20230101
     startDateReached = False
     for i in balanced:
         if i.DataOdczytu == startDate:
@@ -855,69 +850,66 @@ def show_stacks_balanced():
             balanced_dateList.append(i.DataOdczytu)
         if i.DataOdczytu == endDate:
             break
-    # for i in generated:
-    #     if i.DataOdczytu == startDate:
-    #         startDateReached = True
-    #     if startDateReached == True:
-    #         balanced_dailySumList.append(i.DailySum)
-    #         balanced_dateList.append(i.DataOdczytu)
-    #     if i.DataOdczytu == endDate:
-    #         break
 
-
-    # for i in generated:
-    #     generated_dailySumList.append(i.DailySum)
-    # for i in spent:
-    #     spent_dailySumList.append(i.DailySum)
-    #
-    #
-    #
-    # plt.plot(x_values, balanced_dailySumList)
-
-    days = np.arange(1, 11)  # 10 days
-    energy_usage = np.random.randint(50, 200, size=10)  # Random energy usage values
-
-    # Create a bar graph
     plt.figure(figsize=(10, 6))
+    balanced_dateList = [datetime.strptime(date, '%Y%m%d') for date in balanced_dateList]
+
     bars = plt.bar(balanced_dateList, balanced_dailySumList, alpha=0.7, color='blue')
     for bar, value in zip(bars, balanced_dailySumList):
-        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+        if len(balanced_dailySumList) < 20:
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+        else:
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(int(value)), ha='center', va='bottom')
     # Add labels and title
     # plt.xlabel('Days')
     # plt.ylabel('Energy Usage (kWh)')
     # plt.title('Energy Usage Over 10 Days (Bar Graph)')
-
-    # Show the plot
-    # plt.grid(axis='y', linestyle='--', alpha=0.7)
-    # Show the plot
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.title('Energy usage between ' + start_date_entry_cal.get_date() + ' and ' + end_date_entry_cal.get_date())
+    plt.xlabel('Date')
+    plt.ylabel('kWh')
+    plt.gcf().autofmt_xdate()
+    plt.gcf().canvas.manager.set_window_title('PGE report analysis')
     plt.show()
 
 def show_stacks_generated():
     startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
     endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
 
-    balanced_dailySumList = []
     generated_dailySumList = []
-    spent_dailySumList = []
     balanced_dateList = []
     generated_dateList = []
-    spent_dateList = []
-    #count = 20230101
     startDateReached = False
     for i in balanced:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
-            balanced_dailySumList.append(i.DailySum)
-            balanced_dateList.append(i.DataOdczytu)
+            generated_dailySumList.append(i.DailySum)
+            generated_dateList.append(i.DataOdczytu)
         if i.DataOdczytu == endDate:
             break
 
     plt.figure(figsize=(10, 6))
+    generated_dateList = [datetime.strptime(date, '%Y%m%d') for date in generated_dateList]
     bars = plt.bar(generated_dateList, generated_dailySumList, alpha=0.7, color='blue')
+
     for bar, value in zip(bars, generated_dailySumList):
-        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+        if len(generated_dailySumList) < 20:
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+        else:
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(int(value)), ha='center', va='bottom')
     # Show the plot
+
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.title('Energy usage between ' + start_date_entry_cal.get_date() + ' and ' + end_date_entry_cal.get_date())
+    plt.xlabel('Date')
+    plt.ylabel('kWh')
+    plt.gcf().autofmt_xdate()
+    plt.gcf().canvas.manager.set_window_title('PGE report analysis')
     plt.show()
 
 def show_stacks_spent():
@@ -938,10 +930,22 @@ def show_stacks_spent():
             break
 
     plt.figure(figsize=(10, 6))
+    spent_dateList = [datetime.strptime(date, '%Y%m%d') for date in spent_dateList]
     bars = plt.bar(spent_dateList, spent_dailySumList, alpha=0.7, color='blue')
     for bar, value in zip(bars, spent_dailySumList):
-        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+        if len(spent_dailySumList) < 20:
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+        else:
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(int(value)), ha='center', va='bottom')
     # Show the plot
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.title('Energy usage between ' + start_date_entry_cal.get_date() + ' and ' + end_date_entry_cal.get_date())
+    plt.xlabel('Date')
+    plt.ylabel('kWh')
+    plt.gcf().autofmt_xdate()
+    plt.gcf().canvas.manager.set_window_title('PGE report analysis')
     plt.show()
 
 def show_line_graph():
@@ -987,19 +991,18 @@ def show_line_graph():
     generated_dateList = [datetime.strptime(date, '%Y%m%d') for date in generated_dateList]
     spent_dateList = [datetime.strptime(date, '%Y%m%d') for date in spent_dateList]
 
-    plt.plot(balanced_dateList, balanced_dailySumList, label='Balanced Daily Sum')
-    plt.plot(generated_dateList, generated_dailySumList, label='Generated Daily Sum')
-    plt.plot(spent_dateList, spent_dailySumList, label='Spent Daily Sum')
+    plt.plot(balanced_dateList, balanced_dailySumList, label='Balanced ')
+    plt.plot(generated_dateList, generated_dailySumList, label='Sold')
+    plt.plot(spent_dateList, spent_dailySumList, label='Bought')
 
-    
-    plt.title('Daily Sums Over Time')
+    plt.title('Energy usage between ' + start_date_entry_cal.get_date() + ' and ' + end_date_entry_cal.get_date())
     plt.xlabel('Date')
-    plt.ylabel('Daily Sum')
+    plt.ylabel('kWh')
     ax = plt.gca()
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     plt.gcf().autofmt_xdate()
-
+    plt.gcf().canvas.manager.set_window_title('PGE report analysis')
     plt.legend()
     plt.show()
 
@@ -1210,8 +1213,6 @@ def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
 
-    # Make sure all required weather variables are listed here
-    # The order of variables in hourly or daily is important to assign them correctly below
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": lat,
@@ -1224,10 +1225,6 @@ def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
 
     # Process first location. Add a for-loop for multiple locations or weather models
     response = responses[0]
-    # print(f"Coordinates {response.Latitude()}°E {response.Longitude()}°N")
-    # print(f"Elevation {response.Elevation()} m asl")
-    # print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
-    # print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
     # Process daily data. The order of variables needs to be the same as requested.
     daily = response.Daily()
@@ -1250,7 +1247,7 @@ def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
     day2TempMin = math.ceil(daily_temperature_2m_min[2])
     day2TempMax = math.ceil(daily_temperature_2m_max[2])
     print(str(day1TempMin) + " " + str(daily_temperature_2m_max[1]))
-    t = "Weather on " + str(date1)+ " " + str(day1TempMin) + "C to " + str(day1TempMax) + "C " + "and on " + str(date2) + str(day2TempMin) + "C to" + str(day2TempMax) + "C "
+    t = "Weather on " + str(date1) + " " + str(day1TempMin) + " C to " + str(day1TempMax) + " C " + "and on " + str(date2) + " " + str(day2TempMin) + " C to " + str(day2TempMax) + " C "
     label = ttk.Label(subwindow, text=t).pack()
 
 # Set the login URL and other relevant URLs
@@ -1392,11 +1389,17 @@ def show_linechart_Fronius_daily():
             break
 
     plt.plot(dateList, dailyProduction_list)
+    ax = plt.gca()
+    # ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.gcf().autofmt_xdate()
+    plt.gcf().canvas.manager.set_window_title('PGE report analysis')
+    plt.legend()
     plt.show()
 
 def show_differnce_betweenFronius_and_PGE_daily():
-    startDate = start_date_entry_cal.get_date()
-    endDate = end_date_entry_cal.get_date()
+    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
     start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
     end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
 
@@ -1503,11 +1506,11 @@ def solar_energy_prediction_forecast():
         # plt.show()
         subwindow = tk.Toplevel(root)
         subwindow.title("Weather data")
-        t = "Predicted energy output on " + date1 + " : " + str(prod1) + " and on " + date2 + " : " + str(prod2)
+        t = "Predicted energy output on " + date1 + " : " + str(prod1) +"Wh" + " and on " + date2 + " : " + str(prod2) + "Wh"
         label = ttk.Label(subwindow, text=t)
         label.pack(padx=20, pady=20)
         show_weather_forecast_for_energy_prediction_days(subwindow,date1,date2)
-        limitText = "Limit per hour:" + str(message_data['ratelimit']['limit'])
+        limitText = "Limit per hour: " + str(message_data['ratelimit']['limit'])
         labelLimit = ttk.Label(subwindow, text=limitText)
         labelLimit.pack()
         remainingText = "Remaining Rate Limit: " + str(remaining_rate_limit)
@@ -1521,7 +1524,7 @@ def solar_energy_prediction_forecast():
 
 root = tk.Tk()
 root.geometry("1000x800")
-
+root.title("Energy consumption and generation report visualizer")
 # Menu
 menubar = tk.Menu(root)
 
