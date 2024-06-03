@@ -855,11 +855,12 @@ def show_stacks_balanced():
     balanced_dateList = [datetime.strptime(date, '%Y%m%d') for date in balanced_dateList]
 
     bars = plt.bar(balanced_dateList, balanced_dailySumList, alpha=0.7, color='blue')
-    for bar, value in zip(bars, balanced_dailySumList):
-        if len(balanced_dailySumList) < 20:
-            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
-        else:
-            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(int(value)), ha='center', va='bottom')
+    if len(balanced_dailySumList) < 100:
+        for bar, value in zip(bars, balanced_dailySumList):
+            if len(balanced_dailySumList) < 20:
+                plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+            else:
+                plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(int(value)), ha='center', va='bottom')
     # Add labels and title
     # plt.xlabel('Days')
     # plt.ylabel('Energy Usage (kWh)')
@@ -894,12 +895,12 @@ def show_stacks_generated():
     plt.figure(figsize=(10, 6))
     generated_dateList = [datetime.strptime(date, '%Y%m%d') for date in generated_dateList]
     bars = plt.bar(generated_dateList, generated_dailySumList, alpha=0.7, color='blue')
-
-    for bar, value in zip(bars, generated_dailySumList):
-        if len(generated_dailySumList) < 20:
-            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
-        else:
-            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(int(value)), ha='center', va='bottom')
+    if len(generated_dailySumList) < 100:
+        for bar, value in zip(bars, generated_dailySumList):
+            if len(generated_dailySumList) < 20:
+                plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+            else:
+                plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(int(value)), ha='center', va='bottom')
     # Show the plot
 
     ax = plt.gca()
@@ -932,11 +933,12 @@ def show_stacks_spent():
     plt.figure(figsize=(10, 6))
     spent_dateList = [datetime.strptime(date, '%Y%m%d') for date in spent_dateList]
     bars = plt.bar(spent_dateList, spent_dailySumList, alpha=0.7, color='blue')
-    for bar, value in zip(bars, spent_dailySumList):
-        if len(spent_dailySumList) < 20:
-            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
-        else:
-            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(int(value)), ha='center', va='bottom')
+    if len(spent_dailySumList) < 100:
+        for bar, value in zip(bars, spent_dailySumList):
+            if len(spent_dailySumList) < 20:
+                plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+            else:
+                plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(int(value)), ha='center', va='bottom')
     # Show the plot
     ax = plt.gca()
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
@@ -1350,7 +1352,6 @@ def show_stacks_Fronius_daily():
     start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
     end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
 
-
     dailyProduction_list = []
     dateList = []
 
@@ -1366,9 +1367,20 @@ def show_stacks_Fronius_daily():
 
     plt.figure(figsize=(10, 6))
     bars = plt.bar(dateList, dailyProduction_list, alpha=0.7, color='blue')
-    for bar, value in zip(bars, dailyProduction_list):
-        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
-    # Show the plot
+    if len(dailyProduction_list) < 100:
+        for bar, value in zip(bars, dailyProduction_list):
+            if len(dailyProduction_list) < 20:
+                plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+            else:
+                plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(int(value)), ha='center', va='bottom')
+    ax = plt.gca()
+    # ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.title('Energy generation between ' + start_date_entry_cal.get_date() + ' and ' + end_date_entry_cal.get_date())
+    plt.xlabel('Date')
+    plt.ylabel('kWh')
+    plt.gcf().autofmt_xdate()
+    plt.gcf().canvas.manager.set_window_title('Fronius report analysis')
     plt.show()
 
 def show_linechart_Fronius_daily():
@@ -1390,11 +1402,13 @@ def show_linechart_Fronius_daily():
 
     plt.plot(dateList, dailyProduction_list)
     ax = plt.gca()
+    plt.title('Energy generation between ' + start_date_entry_cal.get_date() + ' and ' + end_date_entry_cal.get_date())
     # ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    plt.xlabel('Date')
+    plt.ylabel('kWh')
     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
     plt.gcf().autofmt_xdate()
-    plt.gcf().canvas.manager.set_window_title('PGE report analysis')
-    plt.legend()
+    plt.gcf().canvas.manager.set_window_title('Fronius report analysis')
     plt.show()
 
 def show_differnce_betweenFronius_and_PGE_daily():
@@ -1402,7 +1416,6 @@ def show_differnce_betweenFronius_and_PGE_daily():
     endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
     start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
     end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
-
 
     startDateReached = False
     generatedSum = 0
