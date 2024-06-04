@@ -22,7 +22,8 @@ import matplotlib.pyplot as plt
 from decimal import Decimal
 import numpy as np
 import matplotlib.dates as mdates
-
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
 class Day:
     def __init__(self, KodPP, DataOdczytu, Kierunek, HourUsageList):
@@ -124,6 +125,9 @@ customConsumedEnergy = []
 customDay = CustomDaily('01.01.2023', 0.0)
 customConsumedEnergy.append(customDay)
 customConsumedEnergy.clear()
+global PGE_file_opened, Fronius_file_opened
+PGE_file_opened = False
+Fronius_file_opened = False
 
 #To jest potrzebne bo inaczej nie da sie normalnie poierac wartosci z tablic
 
@@ -160,6 +164,8 @@ def open_file():
         csv_reader = csv.reader(input, delimiter=';')
         line_count = 0
         parse_and_export_to_lists(csv_reader, line_count)
+        enable_PGE_related_buttons()
+        enable_PGE_and_Fronius_related_buttons()
         unlock_dates()
 
     # analyze_button.config(state=tk.DISABLED)
@@ -172,7 +178,8 @@ def open_file_fronius_daily():
         line_count = 0
         parse_Fronius(csv_reader, line_count)
         unlock_dates()
-
+        enable_Fronius_related_buttons()
+        enable_PGE_and_Fronius_related_buttons()
         for instance in froniusDaily_production_list:
             print(instance.DataOdczytu)
 def open_file_fronius_5():
@@ -183,7 +190,8 @@ def open_file_fronius_5():
         line_count = 0
         parse_Fronius_5(csv_reader, line_count)
         unlock_dates()
-
+        enable_Fronius_related_buttons()
+        enable_PGE_and_Fronius_related_buttons()
         for instance in froniusMinute_prodcution_list:
             print(instance.DataOdczytu)
 
@@ -319,12 +327,12 @@ def analyze_day():
     date = cal.get_date()
 
     def show_hourly_usage_linechart_day():
-        print(balanced[0].DataOdczytu)
-        print(balanced[0].HourUsageList)
+        # print(balanced[0].DataOdczytu)
+        # print(balanced[0].HourUsageList)
         date = cal.get_date()
         startDate = datetime.strptime(date, "%m/%d/%y")
         startDate = startDate.strftime("%Y%m%d")
-        print(startDate)
+        # print(startDate)
         picked_day_balanced = day
         picked_day_generated = day
         picked_day_spent = day
@@ -343,8 +351,8 @@ def analyze_day():
             if i.DataOdczytu == startDate:
                 picked_day_spent = i
                 break
-        print(picked_day_balanced.DataOdczytu)
-        print(picked_day_balanced.HourUsageList)
+        # print(picked_day_balanced.DataOdczytu)
+        # print(picked_day_balanced.HourUsageList)
         formatted_date = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
         plt.plot(labels, picked_day_balanced.HourUsageList, label='Balanced')
         plt.plot(labels, picked_day_generated.HourUsageList, label='Generated')
@@ -376,11 +384,11 @@ def analyze_day():
         show_weather_hourly_1day(date)
 
 
-    open_button_show_hourly_usage_linechart_day = ttk.Button(subwindow, text='Show_hourly_usage_linechart_day', command=show_hourly_usage_linechart_day)
+    open_button_show_hourly_usage_linechart_day = ttk.Button(subwindow, text='Show hourly usage linechart day', command=show_hourly_usage_linechart_day)
     open_button_show_hourly_usage_linechart_day.pack()
-    show_fronius_hourly_button = ttk.Button(subwindow, text='Show_fronius_linechart_hourly_button', command=show_fronius_hourly)
+    show_fronius_hourly_button = ttk.Button(subwindow, text='Show fronius linechart hourly button', command=show_fronius_hourly)
     show_fronius_hourly_button.pack()
-    show_weather_temp_button = ttk.Button(subwindow, text='show_weather_temp', command=show_weather_temp)
+    show_weather_temp_button = ttk.Button(subwindow, text='Show weather temp', command=show_weather_temp)
     show_weather_temp_button.pack()
     subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
 
@@ -831,8 +839,8 @@ def configure_price_settings():
     save_price_settings_button.pack()
     def display_price_settings():
         print(fixedDailyCharge)
-    display_price_settings_button = ttk.Button(subwindow, text="Display price settings", command=display_price_settings)
-    display_price_settings_button.pack()
+    # display_price_settings_button = ttk.Button(subwindow, text="Display price settings", command=display_price_settings)
+    # display_price_settings_button.pack()
 
 
 def show_stacks_balanced():
@@ -1131,14 +1139,14 @@ def show_current_weather():
     current_weather_code = current.Variables(5).Value()
     current_cloud_cover = current.Variables(6).Value()
 
-    print(f"Current time {current.Time()}")
-    print(f"Current temperature_2m {current_temperature_2m}")
-    print(f"Current is_day {current_is_day}")
-    print(f"Current rain {current_rain}")
-    print(f"Current showers {current_showers}")
-    print(f"Current snowfall {current_snowfall}")
-    print(f"Current weather_code {current_weather_code}")
-    print(f"Current cloud_cover {current_cloud_cover}")
+    # print(f"Current time {current.Time()}")
+    # print(f"Current temperature_2m {current_temperature_2m}")
+    # print(f"Current is_day {current_is_day}")
+    # print(f"Current rain {current_rain}")
+    # print(f"Current showers {current_showers}")
+    # print(f"Current snowfall {current_snowfall}")
+    # print(f"Current weather_code {current_weather_code}")
+    # print(f"Current cloud_cover {current_cloud_cover}")
 
     description = interpret_weather_code(str(int(current_weather_code)))
     sunny_image = Image.open("sunny.png")
@@ -1147,19 +1155,23 @@ def show_current_weather():
     moon_image = Image.open("moon.png")
     moon_image = moon_image.resize((100, 100))
     moon_image_tk = ImageTk.PhotoImage(moon_image)
-    subwindow = tk.Toplevel(root)
-    tk.Label(subwindow,text=description).pack()
+    weather_description_label =tk.Label(root,text=description)
+    weather_description_label.pack()
     if current_is_day == 0.0:
-        weather_label = tk.Label(subwindow, image=moon_image_tk)
-        weather_label.pack()
+        weather_label = tk.Label(root, image=moon_image_tk)
+        weather_label.place(x=100,y=570)
         weather_label.image = moon_image_tk
     else:
-        weather_label = tk.Label(subwindow, image=sunny_image_tk)
-        weather_label.pack()
+        weather_label = tk.Label(root, image=sunny_image_tk)
+        weather_label.place(x=100,y=570)
         weather_label.image = sunny_image_tk
-    temp_label = tk.Label(subwindow, text=str(round(current_temperature_2m))+'°C')
-    temp_label.pack()
-    subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
+    image_center = 150
+    root.update()
+    # Z jakiegoś powodu nie dało się bez tego dostaś szerokośći labelu
+    print(weather_description_label.winfo_width())
+    weather_description_label.place(x = image_center - (weather_description_label.winfo_width()/2),y=550)
+    temp_label = tk.Label(root, text=str(round(current_temperature_2m))+'°C')
+    temp_label.place(x=137,y=670)
 
 def show_weather_forecast():
     lat, lon = get_coord()
@@ -1442,7 +1454,7 @@ def show_differnce_betweenFronius_and_PGE_daily():
     labels = ['PGE', 'Fronius', 'Difference']
     colors = ['blue', 'green', 'red']
     # Create a bar chart
-    bars = plt.bar(labels, values, color=colors)
+
 
     # startDate = balanced[0].DataOdczytu
     # endDate = balanced[-1].DataOdczytu
@@ -1450,41 +1462,41 @@ def show_differnce_betweenFronius_and_PGE_daily():
     endDate = f"{endDate[:4]}/{endDate[4:6]}/{endDate[6:]}"
     # Add labels and a title
     # plt.xlabel('Categories')
+    plt.figure(figsize=(10, 6))
+
     plt.ylabel('Values')
     plt.title('Difference between produced energy and energy given back to the provider between ' + startDate + '-' + endDate)
-
+    bars = plt.bar(labels, values, color=colors)
     for bar, value in zip(bars, values):
         plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
 
     print(energySold[0].DailySum)
     print(startDate)
+    plt.gcf().canvas.manager.set_window_title('Fronius and PGE report comparision')
+
     plt.show()
 
 # To czasami randomowo przestaje dzialać, jest problem po stronia API
 def get_coord():
     # lat, lon = None, None
     city = city_entry.get()
-    print(city)
-    base_url = "https://nominatim.openstreetmap.org/search"
-    params = {
-        'q': city,
-        'format': 'json',
-        'limit': 1
-    }
-    response = requests.get(base_url, params=params)
-    if response.status_code == 200:
-        data = response.json()
+    geolocator = Nominatim(user_agent="my_geocoder")
 
-        if data:
-            latitude = data[0]['lat']
-            longitude = data[0]['lon']
-            print(latitude)
-            print(longitude)
-            return latitude, longitude
+    try:
+        # Get location information
+        location = geolocator.geocode(city, timeout=10)
+
+        # Extract latitude and longitude
+        if location:
+            return location.latitude, location.longitude
         else:
-            return None, None
-    else:
-        return None, None
+            return None
+    except GeocoderTimedOut:
+        print("The geocoding service timed out. Please try again.")
+        return None
+    except GeocoderServiceError as e:
+        print(f"Geocoding service error: {e}")
+        return None
 
 def solar_energy_prediction_forecast():
     lat, lon = get_coord()
@@ -1504,11 +1516,11 @@ def solar_energy_prediction_forecast():
         remaining_rate_limit = message_data['ratelimit']['remaining']
         # result_dates = str(result_dates).replace('[', '').replace(']', '')
         date1, date2 = result_dates
-        print("Result Dates: ", date1, date2)
+        # print("Result Dates: ", date1, date2)
         prod1, prod2 = result_values
-        print("Result Values in WH:", prod1, prod2)
-        print("Limit per hour:", message_data['ratelimit']['limit'])
-        print("Remaining Rate Limit:", remaining_rate_limit)
+        # print("Result Values in WH:", prod1, prod2)
+        # print("Limit per hour:", message_data['ratelimit']['limit'])
+        # print("Remaining Rate Limit:", remaining_rate_limit)
         # plt.ylabel('WH')
         # plt.title('Energy prefiction for ' + date1 + '-' + date2)
         # labels = [date1, date2]
@@ -1535,8 +1547,28 @@ def solar_energy_prediction_forecast():
     else:
         print(f"Error: {response.status_code} - {response.text}")
 
+def enable_PGE_related_buttons():
+    PGE_file_opened = True
+    show_line_graph_button.config(state=tk.NORMAL)
+    show_stacks_button_balanced.config(state=tk.NORMAL)
+    show_stacks_button_generated.config(state=tk.NORMAL)
+    show_stacks_button_spent.config(state=tk.NORMAL)
+    show_sum_button.config(state=tk.NORMAL)
+    show_energy_price_button.config(state=tk.NORMAL)
+    configure_energy_price_settings_button.config(state=tk.NORMAL)
+
+def enable_Fronius_related_buttons():
+    Fronius_file_opened = True
+    show_fronius_sum_button.config(state=tk.NORMAL)
+    show_stacks_Fronius_daily_button.config(state=tk.NORMAL)
+    show_linechart_Fronius_daily_button.config(state=tk.NORMAL)
+
+def enable_PGE_and_Fronius_related_buttons():
+    show_differnce_betweenFronius_and_PGE_daily_button.config(state=tk.NORMAL)
+
+
 root = tk.Tk()
-root.geometry("1000x800")
+root.geometry("1200x800")
 root.title("Energy consumption and generation report visualizer")
 # Menu
 menubar = tk.Menu(root)
@@ -1563,7 +1595,7 @@ menubar.add_cascade(label="Edit", menu=edit_menu)
 
 root.config(menu=menubar)
 
-# Left: Calendars
+# Calendars
 enter_start_date_label = tk.Label(root, text='Enter start date:')
 enter_start_date_label.place(x=100, y=10)
 
@@ -1579,7 +1611,7 @@ end_date_entry_cal.place(x=30, y=300)
 start_date_entry_cal.config(state='disabled')
 end_date_entry_cal.config(state='disabled')
 
-# Center: PGE related stuff
+# PGE related stuff
 button_size = 40
 style = ttk.Style()
 style.configure('Custom.TButton', background='blue')
@@ -1601,80 +1633,95 @@ analyze_day_button.place(x=340, y=160)
 
 preview_report_button = ttk.Button(root, text='Preview report', command=preview, width=button_size, style='Custom.TButton')
 preview_report_button.place(x=340, y=190)
-# Right: Other widgets
+
 
 button_size1 = 30
 show_line_graph_button = ttk.Button(root, text='Show line graph', command=show_line_graph, width=button_size1)
-show_line_graph_button.place(x=640, y=10)
+show_line_graph_button.place(x=640, y=40)
+show_line_graph_button.config(state=tk.DISABLED)
 
 show_stacks_button_balanced = ttk.Button(root, text='Show stacks balanced', command=show_stacks_balanced, width=button_size1)
-show_stacks_button_balanced.place(x=640, y=40)
+show_stacks_button_balanced.place(x=640, y=70)
+show_stacks_button_balanced.config(state=tk.DISABLED)
 
 show_stacks_button_generated = ttk.Button(root, text='Show stacks generated', command=show_stacks_generated, width=button_size1)
-show_stacks_button_generated.place(x=640, y=70)
+show_stacks_button_generated.place(x=640, y=100)
+show_stacks_button_generated.config(state=tk.DISABLED)
 
 show_stacks_button_spent = ttk.Button(root, text='Show stacks spent', command=show_stacks_spent, width=button_size1)
-show_stacks_button_spent.place(x=640, y=100)
-
-show_fronius_sum_button = ttk.Button(root, text='Show fronius sum', command=show_fronius_sum, width=button_size1)
-show_fronius_sum_button.place(x=640, y=130)
+show_stacks_button_spent.place(x=640, y=130)
+show_stacks_button_spent.config(state=tk.DISABLED)
 
 show_sum_button = ttk.Button(root, text='Show sum', command=show_sum, width=button_size1)
+show_sum_button.config(state=tk.DISABLED)
 show_sum_button.place(x=640, y=160)
-# tk.Label(root, text="Default pricing model is W11 without additional costs").place(x=640, y=180)
-tk.Label(root, text="Price per KwH Spent:").place(x=640, y=200)
-energy_price_spent_entry = tk.Entry(root)
-energy_price_spent_entry.place(x=640, y=220)
 
-tk.Label(root, text="Price per KwH Generated:").place(x=640, y=250)
+show_fronius_sum_button = ttk.Button(root, text='Show fronius sum', command=show_fronius_sum, width=button_size1)
+show_fronius_sum_button.place(x=640, y=190)
+show_fronius_sum_button.config(state=tk.DISABLED)
+
+
+# tk.Label(root, text="Default pricing model is W11 without additional costs").place(x=640, y=180)
+tk.Label(root, text="Price per KwH Spent:").place(x=640, y=220)
+energy_price_spent_entry = tk.Entry(root)
+energy_price_spent_entry.place(x=640, y=240)
+
+tk.Label(root, text="Price per KwH Generated:").place(x=640, y=270)
 energy_price_generated_entry = tk.Entry(root)
-energy_price_generated_entry.place(x=640, y=270)
+energy_price_generated_entry.place(x=640, y=290)
 
 show_energy_price_button = ttk.Button(root, text='Show energy price spent', command=show_energy_price, width=button_size1)
-show_energy_price_button.place(x=640, y=300)
+show_energy_price_button.place(x=640, y=320)
+show_energy_price_button.config(state=tk.DISABLED)
+
 configure_energy_price_settings_button = ttk.Button(root, text='Add additional price settings ', command=configure_price_settings, width=button_size1)
-configure_energy_price_settings_button.place(x=400, y=300)
+configure_energy_price_settings_button.place(x=640, y=350)
+configure_energy_price_settings_button.config(state=tk.DISABLED)
 
 show_stacks_Fronius_daily_button = ttk.Button(root, text='Show stacks Fronius daily', command=show_stacks_Fronius_daily, width=button_size1)
-show_stacks_Fronius_daily_button.place(x=640, y=330)
+show_stacks_Fronius_daily_button.place(x=640, y=380)
+show_stacks_Fronius_daily_button.config(state=tk.DISABLED)
 
 show_linechart_Fronius_daily_button = ttk.Button(root, text='Show linechart Fronius daily', command=show_linechart_Fronius_daily, width=button_size1)
-show_linechart_Fronius_daily_button.place(x=640, y=360)
+show_linechart_Fronius_daily_button.place(x=640, y=410)
+show_linechart_Fronius_daily_button.config(state=tk.DISABLED)
 
 show_differnce_betweenFronius_and_PGE_daily_button = ttk.Button(root, text='Show differnce between Fronius and PGE data ', command=show_differnce_betweenFronius_and_PGE_daily)
-show_differnce_betweenFronius_and_PGE_daily_button.place(x=640, y=390)
+show_differnce_betweenFronius_and_PGE_daily_button.place(x=640, y=440)
+show_differnce_betweenFronius_and_PGE_daily_button.config(state=tk.DISABLED)
 
-display_graph_button = ttk.Button(root, text='Display Graph')
-display_graph_button.place(x=640, y=420)
+# display_graph_button = ttk.Button(root, text='Display Graph')
+# display_graph_button.place(x=640, y=420)
 
 city_label = ttk.Label(root, text="Enter City: ")
-city_label.place(x=640, y=450)
+city_label.place(x=640, y=470)
 
 city_entry = ttk.Entry(root, width=20)
 city_entry.insert(0, "Lublin")
-city_entry.place(x=640, y=470)
+city_entry.place(x=640, y=490)
 
 show_weather_history_button = ttk.Button(root, text='Show weather history', command=show_weather_history, width=button_size1)
-show_weather_history_button.place(x=640, y=500)
+show_weather_history_button.place(x=870, y=40)
 
-show_weather_forecast_button = ttk.Button(root, text='Show 7day weather forecast', command=show_weather_forecast, width=button_size1)
-show_weather_forecast_button.place(x=640, y=530)
+show_weather_forecast_button = ttk.Button(root, text='Show 7 day weather forecast', command=show_weather_forecast, width=button_size1)
+show_weather_forecast_button.place(x=870, y=70)
 
 show_current_weather_button = ttk.Button(root, text='Show current weather', command=show_current_weather, width=button_size1)
-show_current_weather_button.place(x=640, y=560)
+show_current_weather_button.place(x=870, y=100)
 
 show_hourly_usage_linechart_button = ttk.Button(root, text='Show hourly usage linechart', command=show_hourly_usage_linechart, width=button_size1)
-show_hourly_usage_linechart_button.place(x=640, y=590)
+show_hourly_usage_linechart_button.place(x=870, y=130)
 
-tk.Label(root, text="Enter plant power:").place(x=640, y=620)
+tk.Label(root, text="Enter plant power:").place(x=870, y=160)
 plant_power_entry = tk.Entry(root)
-plant_power_entry.place(x=640, y=640)
+plant_power_entry.place(x=870, y=180)
 
 solar_energy_prediction_forecast_button = ttk.Button(root, text='Solar energy prediction forecast', command=solar_energy_prediction_forecast, width=button_size1)
-solar_energy_prediction_forecast_button.place(x=640, y=670)
+solar_energy_prediction_forecast_button.place(x=870, y=210)
 
-get_coord_button = ttk.Button(root, text='Get coord', command=get_coord, width=button_size1)
-get_coord_button.place(x=640, y=700)
+# get_coord_button = ttk.Button(root, text='Get coord', command=get_coord, width=button_size1)
+# get_coord_button.place(x=640, y=700)
+
 # L1 = Label(root, text="Enter Date")
 # L1.pack()
 # dateEntry = Entry(root)
