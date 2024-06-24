@@ -727,8 +727,6 @@ def show_energy_price():
     priceSold = energySoldSum * pricePerKwHGenerated
     priceBought = energyBoughtSum * pricePerKwHSpent
     priceFinal = priceBought - priceSold
-
-
     if(configure_price_settings_called == True):
         print(cena_zalezna_od_godziny)
         if(cena_zalezna_od_godziny == True):
@@ -868,7 +866,7 @@ def configure_price_settings():
             global fixedChargeExists
             fixedChargeExists = fixedChargeExistsBooleanVar.get()
             fixedDailyCharge = Decimal(fixedDailyCharge_entry.get())
-            print(fixedDailyCharge)
+            # print(fixedDailyCharge)
             fixedHourlyCharge = Decimal(fixedHourlyCharge_entry.get())
         if cena_zalezna_od_godzinyBooleanVar.get() == True:
             global dzienna_stawka_pobrane, dzienna_stawka_oddane, nocna_stawka_pobrane, nocna_stawka_oddane
@@ -1671,7 +1669,6 @@ analyze_day_button.config(state=tk.DISABLED)
 
 preview_report_button = ttk.Button(root, text='Preview report', command=preview, width=button_size, style='Custom.TButton')
 preview_report_button.place(x=340, y=190)
-
 
 button_size1 = 30
 show_line_graph_button = ttk.Button(root, text='Show line graph', command=show_line_graph, width=button_size1, style='PGE.TButton')
