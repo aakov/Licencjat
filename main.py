@@ -25,6 +25,9 @@ import numpy as np
 import matplotlib.dates as mdates
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+from plotly.subplots import make_subplots
+from plotly.graph_objs import FigureWidget
+import plotly.express as px
 
 class Day:
     def __init__(self, KodPP, DataOdczytu, Kierunek, HourUsageList):
@@ -126,9 +129,10 @@ customConsumedEnergy = []
 customDay = CustomDaily('01.01.2023', 0.0)
 customConsumedEnergy.append(customDay)
 customConsumedEnergy.clear()
-global PGE_file_opened, Fronius_file_opened
+global PGE_file_opened, Fronius_file_opened, Fronius_5_min_file_opened
 PGE_file_opened = False
 Fronius_file_opened = False
+Fronius_5_min_file_opened = False
 
 #To jest potrzebne bo inaczej nie da sie normalnie poierac wartosci z tablic
 
@@ -191,8 +195,12 @@ def open_file_fronius_5():
         line_count = 0
         parse_Fronius_5(csv_reader, line_count)
         unlock_dates()
-        enable_Fronius_related_buttons()
+        # enable_Fronius_related_buttons()
+
+        global Fronius_5_min_file_opened
+        Fronius_5_min_file_opened = True
         enable_PGE_and_Fronius_related_buttons()
+
         for instance in froniusMinute_prodcution_list:
             print(instance.DataOdczytu)
 
@@ -320,6 +328,7 @@ def open_file_custom_daily_report():
                 dateList.append(i.DataOdczytu)
             if i.DataOdczytu == end_date:
                 break
+        subwindow.destroy()
 
         # print(len(analyzed_list))
         # print(len(dailyProduction_list))
@@ -334,7 +343,9 @@ def open_file_custom_daily_report():
         ax.xaxis.set_major_locator(mdates.AutoDateLocator())
         plt.gcf().autofmt_xdate()
         plt.gcf().canvas.manager.set_window_title('Custom report analysis')
+        subwindow.destroy()
         plt.show()
+        # subwindow.destroy()
 
     open_file_button = tk.Button(subwindow, text='Open File', command=process_custom_daily_report)
     open_file_button.pack()
@@ -441,7 +452,7 @@ def analyze_day():
     open_button_show_hourly_usage_linechart_day.pack()
     show_fronius_hourly_button = ttk.Button(subwindow, text='Show fronius linechart hourly ', command=show_fronius_hourly,width = 30)
     show_fronius_hourly_button.pack()
-    show_weather_temp_button = ttk.Button(subwindow, text='Show weather temp', command=show_weather_temp, width = 30)
+    show_weather_temp_button = ttk.Button(subwindow, text='Show weather temperature', command=show_weather_temp, width = 30)
     show_weather_temp_button.pack()
     subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
 
@@ -503,16 +514,16 @@ def show_weather_hourly_1day(date):
     plt.xlabel('Hour')
     plt.ylabel('°C')
     plt.legend()
-    plt.title('Hourly usage on ' + str(date))
-    # plt.show()
-    plt.figure(figsize=(10, 6))
-    rounded_temp = [round(num) for num in hourly_temperature_2m]
-    bars = plt.bar(labels, rounded_temp, alpha=0.7, color='blue')
-    for bar, value in zip(bars, rounded_temp):
-        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
-    # Show the plot
+    plt.title('Temperature on ' + str(date))
     plt.show()
-    daily_dataframe = pd.DataFrame(data=daily_data)
+    # plt.figure(figsize=(10, 6))
+    # rounded_temp = [round(num) for num in hourly_temperature_2m]
+    # bars = plt.bar(labels, rounded_temp, alpha=0.7, color='blue')
+    # for bar, value in zip(bars, rounded_temp):
+    #     plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
+    # # Show the plot
+    # plt.show()
+    # daily_dataframe = pd.DataFrame(data=daily_data)
     # print(daily_dataframe)
 
 def parse_and_export_to_lists(csv_reader, line_count):
@@ -808,14 +819,14 @@ def configure_price_settings():
     # offPeakRate_entry.pack()
 
     fixedChargeExistsBooleanVar = BooleanVar()
-    fixedChargeExists_checkbox = ttk.Checkbutton(subwindow, text="Istnieje opłata stała",
+    fixedChargeExists_checkbox = ttk.Checkbutton(subwindow, text="Constant charge",
                                                  variable=fixedChargeExistsBooleanVar)
     fixedChargeExists_checkbox.pack()
     fixedDailyCharge_entry = ttk.Entry(subwindow)
-    ttk.Label(subwindow, text="Opłata stała dzienna").pack()
+    ttk.Label(subwindow, text="Dailt constant charge").pack()
     fixedDailyCharge_entry.pack()
     # fixedDailyCharge_entry.insert(0,"0")
-    ttk.Label(subwindow, text="Opłata stała pogodzinna ").pack()
+    ttk.Label(subwindow, text="Hourly constant charge ").pack()
     fixedHourlyCharge_entry = ttk.Entry(subwindow)
     fixedHourlyCharge_entry.pack()
     # fixedHourlyCharge_entry.insert(0,"0")
@@ -823,39 +834,39 @@ def configure_price_settings():
     # peakRate_entry.insert(0,"1.5")
     # offPeakRate_entry.insert(0,"0.75")
     cena_zalezna_od_godzinyBooleanVar = BooleanVar()
-    cena_zalezna_od_godziny_checkbox = ttk.Checkbutton(subwindow, text="Cena zalezna od godziny",
+    cena_zalezna_od_godziny_checkbox = ttk.Checkbutton(subwindow, text="Price depends time of day",
                                                        variable=cena_zalezna_od_godzinyBooleanVar)
     cena_zalezna_od_godziny_checkbox.pack()
 
     # stawka dzienna, nocna, za oddanie, pobranie energii,
-    ttk.Label(subwindow, text="Cena za pobranie energii z sieci w godzinach dziennych ").pack()
+    ttk.Label(subwindow, text="Buyng price in daily hours").pack()
     dzienna_stawka_pobrane_entry = ttk.Entry(subwindow)
     dzienna_stawka_pobrane_entry.pack()
-    ttk.Label(subwindow, text="Cena za pobranie energii z sieci w godzinach nocnych").pack()
+    ttk.Label(subwindow, text="Buyng price in nightly hours").pack()
     nocna_stawka_pobrane_entry = ttk.Entry(subwindow)
     nocna_stawka_pobrane_entry.pack()
-    ttk.Label(subwindow, text="Cena za oddanie energii do sieci w godzinach dziennych").pack()
+    ttk.Label(subwindow, text="Price for selling energy in daily hours").pack()
     dzienna_stawka_oddane_entry = ttk.Entry(subwindow)
     dzienna_stawka_oddane_entry.pack()
-    ttk.Label(subwindow, text="Cena za oddanie energii do sieci w godzinach nocnych").pack()
+    ttk.Label(subwindow, text="Price for selling energy in nightly hours").pack()
     nocna_stawka_oddane_entry = ttk.Entry(subwindow)
     nocna_stawka_oddane_entry.pack()
 
     energy_limit_existsBooleanVar = BooleanVar()
-    energy_limit_exists_checkbox = ttk.Checkbutton(subwindow, text="Kary za prekroczenie limitu",
+    energy_limit_exists_checkbox = ttk.Checkbutton(subwindow, text="Charges for crossing the limit",
                                                            variable=energy_limit_existsBooleanVar)
     energy_limit_exists_checkbox.pack()
 
-    ttk.Label(subwindow, text="Limit pobrania energii").pack()
+    ttk.Label(subwindow, text="Buying limit").pack()
     energy_bought_limit_entry = ttk.Entry(subwindow)
     energy_bought_limit_entry.pack()
-    ttk.Label(subwindow, text="Limit oddania energii").pack()
+    ttk.Label(subwindow, text="Selling limit").pack()
     energy_sold_limit_entry = ttk.Entry(subwindow)
     energy_sold_limit_entry.pack()
-    ttk.Label(subwindow, text="Kara lub nagroda za przekroczenie limitu oddania energii").pack()
+    ttk.Label(subwindow, text="Premium or charge for exceeding selling limit").pack()
     selling_price_reward_or_penalty_after_limit_entry = ttk.Entry(subwindow)
     selling_price_reward_or_penalty_after_limit_entry.pack()
-    ttk.Label(subwindow, text="Kara lub nagroda za przekroczenie limitu pobrania energii").pack()
+    ttk.Label(subwindow, text="Premium or charge for exceeding buying limit").pack()
     buying_price_reward_or_penalty_after_limit_entry = ttk.Entry(subwindow)
     buying_price_reward_or_penalty_after_limit_entry.pack()
     def save_price_settings():
@@ -892,7 +903,6 @@ def configure_price_settings():
         print(fixedDailyCharge)
     # display_price_settings_button = ttk.Button(subwindow, text="Display price settings", command=display_price_settings)
     # display_price_settings_button.pack()
-
 
 def show_stacks_balanced():
     startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
@@ -1313,7 +1323,7 @@ def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
     day2TempMin = math.ceil(daily_temperature_2m_min[2])
     day2TempMax = math.ceil(daily_temperature_2m_max[2])
     # print(str(day1TempMin) + " " + str(daily_temperature_2m_max[1]))
-    t = "Weather on " + str(date1) + " " + str(day1TempMin) + " C to " + str(day1TempMax) + " C " + "and on " + str(date2) + " " + str(day2TempMin) + " C to " + str(day2TempMax) + " C "
+    t = "Weather on " + str(date1) + " " + str(day1TempMin) + " °C to " + str(day1TempMax) + " °C " + "and on " + str(date2) + " " + str(day2TempMin) + " °C to " + str(day2TempMax) + " °C "
     label = ttk.Label(subwindow, text=t).pack()
 
 
@@ -1511,10 +1521,7 @@ def get_coord():
     geolocator = Nominatim(user_agent="my_geocoder")
 
     try:
-        # Get location information
         location = geolocator.geocode(city, timeout=10)
-
-        # Extract latitude and longitude
         if location:
             return location.latitude, location.longitude
         else:
@@ -1594,8 +1601,9 @@ def enable_Fronius_related_buttons():
     show_linechart_Fronius_daily_button.config(state=tk.NORMAL)
 
 def enable_PGE_and_Fronius_related_buttons():
-    if PGE_file_opened and Fronius_file_opened == True:
+    if PGE_file_opened == True and Fronius_file_opened == True:
         show_differnce_betweenFronius_and_PGE_daily_button.config(state=tk.NORMAL)
+    if PGE_file_opened == True and Fronius_5_min_file_opened == True:
         analyze_day_button.config(state=tk.NORMAL)
 
 
@@ -1667,8 +1675,8 @@ analyze_day_button = ttk.Button(root, text='Analyze day', command=analyze_day, w
 analyze_day_button.place(x=340, y=160)
 analyze_day_button.config(state=tk.DISABLED)
 
-preview_report_button = ttk.Button(root, text='Preview report', command=preview, width=button_size, style='Custom.TButton')
-preview_report_button.place(x=340, y=190)
+# preview_report_button = ttk.Button(root, text='Preview report', command=preview, width=button_size, style='Custom.TButton')
+# preview_report_button.place(x=340, y=190)
 
 button_size1 = 30
 show_line_graph_button = ttk.Button(root, text='Show line graph', command=show_line_graph, width=button_size1, style='PGE.TButton')
