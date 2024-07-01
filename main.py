@@ -11,8 +11,11 @@ from PIL import Image, ImageTk
 import PIL
 import requests_cache
 import pandas as pd
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from retry_requests import retry
 from matplotlib.ticker import FormatStrFormatter
+import seaborn as sns
+
 from tkcalendar import Calendar, DateEntry
 from dateutil.parser import parse
 
@@ -25,9 +28,6 @@ import numpy as np
 import matplotlib.dates as mdates
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
-from plotly.subplots import make_subplots
-from plotly.graph_objs import FigureWidget
-import plotly.express as px
 
 class Day:
     def __init__(self, KodPP, DataOdczytu, Kierunek, HourUsageList):
@@ -133,6 +133,7 @@ global PGE_file_opened, Fronius_file_opened, Fronius_5_min_file_opened
 PGE_file_opened = False
 Fronius_file_opened = False
 Fronius_5_min_file_opened = False
+sns.set_theme(style="whitegrid")
 
 #To jest potrzebne bo inaczej nie da sie normalnie poierac wartosci z tablic
 
@@ -510,7 +511,7 @@ def show_weather_hourly_1day(date):
     )}
     daily_data["sunshine_duration"] = daily_sunshine_duration
     labels = list(range(0, 24))
-    plt.plot(labels, hourly_temperature_2m, label='Produced')
+    plt.plot(labels, hourly_temperature_2m, label='Temperature')
     plt.xlabel('Hour')
     plt.ylabel('°C')
     plt.legend()
@@ -1126,8 +1127,9 @@ def show_weather_history():
     # daily_data["sunshine_duration"] = daily_sunshine_duration
 
     daily_dataframe = pd.DataFrame(data=daily_data)
-    subwindow = tk.Toplevel(root)
-    tk.Label(subwindow, text=str(daily_dataframe.to_string(index=False))).pack()
+    plot_weather_data(daily_dataframe)
+    # subwindow = tk.Toplevel(root)
+    # tk.Label(subwindow, text=str(daily_dataframe.to_string(index=False))).pack()
     # print(daily_dataframe)
 
 def interpret_weather_code(code):
@@ -1279,8 +1281,9 @@ def show_weather_forecast():
     daily_data["Min"] = [round(num) for num in daily_temperature_2m_min]
     # print(str(daily_temperature_2m_min[1]) + " " + str(daily_temperature_2m_max[1]))
     daily_dataframe = pd.DataFrame(data=daily_data)
-    subwindow = tk.Toplevel(root)
-    tk.Label(subwindow, text=str(daily_dataframe.to_string(index=False))).pack()
+    plot_weather_data(daily_dataframe)
+    # subwindow = tk.Toplevel(root)
+    # tk.Label(subwindow, text=str(daily_dataframe.to_string(index=False))).pack()
 
 
 def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
@@ -1325,6 +1328,37 @@ def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
     # print(str(day1TempMin) + " " + str(daily_temperature_2m_max[1]))
     t = "Weather on " + str(date1) + " " + str(day1TempMin) + " °C to " + str(day1TempMax) + " °C " + "and on " + str(date2) + " " + str(day2TempMin) + " °C to " + str(day2TempMax) + " °C "
     label = ttk.Label(subwindow, text=t).pack()
+
+
+def plot_weather_data(dataframe):
+
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    sns.lineplot(x="Date", y="Max", data=dataframe, label="Max Temp", ax=ax, color="red", marker="o")
+    sns.lineplot(x="Date", y="Min", data=dataframe, label="Min Temp", ax=ax, color="blue", marker="x")
+
+    # Customizing the plot using Matplotlib
+    ax.set_title('Daily Temperature Forecast')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Temperature (°C)')
+    ax.legend(title='Temperature')
+
+    # Adding gridlines
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+    # Rotating x-axis labels
+    plt.xticks(rotation=45)
+
+    max_temp = dataframe["Max"].iloc[0]
+    min_temp = dataframe["Min"].iloc[0]
+    date = dataframe["Date"].iloc[0]
+    ax.annotate(f'{max_temp}°C', xy=(date, max_temp), xytext=(date, max_temp + 2),
+                arrowprops=dict(facecolor='black', shrink=0.05))
+    ax.annotate(f'{min_temp}°C', xy=(date, min_temp), xytext=(date, min_temp - 2),
+                arrowprops=dict(facecolor='black', shrink=0.05))
+    plt.tight_layout()
+    plt.show()
 
 
 
