@@ -373,11 +373,17 @@ def open_file_custom_daily_report():
         plt.gcf().autofmt_xdate()
         plt.gcf().canvas.manager.set_window_title('Custom report analysis')
         plt.show()
-        subwindow.destroy()
-        global window_opened
-        window_opened = False
+        on_subwindow_close()
+        # global window_opened
+        # window_opened = False
         # subwindow.destroy()
 
+    def on_subwindow_close():
+        global window_opened
+        window_opened = False
+        subwindow.destroy()
+
+    subwindow.protocol("WM_DELETE_WINDOW", on_subwindow_close)
     open_file_button = tk.Button(subwindow, text='Open File', command=call_parse, width=17)
     open_file_button.pack()
     analyze_cutom_report_button = tk.Button(subwindow, text='Analyze custom report', command=analyze_cutom_report)
@@ -1246,7 +1252,7 @@ def show_current_weather():
             overcast_image_tk = ImageTk.PhotoImage(overcast_image)
             weather_image = overcast_image_tk
         if description == "Mainly clear" or description == "Partly cloudy":
-            partly_cloudy_image = Image.open("night_cloud.png.png") #<a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
+            partly_cloudy_image = Image.open("night_cloud.png") #<a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
             partly_cloudy_image = partly_cloudy_image.resize((100, 100))
             partly_cloudy_image_tk = ImageTk.PhotoImage(partly_cloudy_image)
             weather_image = partly_cloudy_image_tk
@@ -1833,7 +1839,7 @@ analyze_day_button.configure(state=tk.DISABLED)
 # preview_report_button.place(x=340, y=190)
 
 button_size1 = 30
-show_line_graph_button = ttk.Button(root, text='Show line graph', command=show_line_graph, width=button_size1, style='PGE.TButton')
+show_line_graph_button = ttk.Button(root, text='Show PGE report line graph', command=show_line_graph, width=button_size1, style='PGE.TButton')
 show_line_graph_button.place(x=640, y=40)
 show_line_graph_button.config(state=tk.DISABLED)
 
@@ -1841,15 +1847,15 @@ show_stacks_button_balanced = ttk.Button(root, text='Show stacks balanced', comm
 show_stacks_button_balanced.place(x=640, y=70)
 show_stacks_button_balanced.config(state=tk.DISABLED)
 
-show_stacks_button_generated = ttk.Button(root, text='Show stacks generated', command=show_stacks_generated, width=button_size1, style='PGE.TButton')
+show_stacks_button_generated = ttk.Button(root, text='Show energy given to network', command=show_stacks_generated, width=button_size1, style='PGE.TButton')
 show_stacks_button_generated.place(x=640, y=100)
 show_stacks_button_generated.config(state=tk.DISABLED)
 
-show_stacks_button_spent = ttk.Button(root, text='Show stacks spent', command=show_stacks_spent, width=button_size1, style='PGE.TButton')
+show_stacks_button_spent = ttk.Button(root, text='Show energy taken from network', command=show_stacks_spent, width=button_size1, style='PGE.TButton')
 show_stacks_button_spent.place(x=640, y=130)
 show_stacks_button_spent.config(state=tk.DISABLED)
 
-show_sum_button = ttk.Button(root, text='Show sum', command=show_sum, width=button_size1, style='PGE.TButton')
+show_sum_button = ttk.Button(root, text='Show PGE report summary', command=show_sum, width=button_size1, style='PGE.TButton')
 show_sum_button.config(state=tk.DISABLED)
 show_sum_button.place(x=640, y=160)
 
@@ -1872,15 +1878,15 @@ configure_energy_price_settings_button = ttk.Button(root, text='Add additional p
 configure_energy_price_settings_button.place(x=640, y=320)
 configure_energy_price_settings_button.config(state=tk.DISABLED)
 
-show_fronius_sum_button = ttk.Button(root, text='Show fronius sum', command=show_fronius_sum, width=button_size1, style='Fronius.TButton')
+show_fronius_sum_button = ttk.Button(root, text='Show Fronius report summary', command=show_fronius_sum, width=button_size1, style='Fronius.TButton')
 show_fronius_sum_button.place(x=640, y=350)
 show_fronius_sum_button.config(state=tk.DISABLED)
 
-show_stacks_Fronius_daily_button = ttk.Button(root, text='Show stacks Fronius daily', command=show_stacks_Fronius_daily, width=button_size1, style='Fronius.TButton')
+show_stacks_Fronius_daily_button = ttk.Button(root, text='Show energy generated as stacks ', command=show_stacks_Fronius_daily, width=button_size1, style='Fronius.TButton')
 show_stacks_Fronius_daily_button.place(x=640, y=380)
 show_stacks_Fronius_daily_button.config(state=tk.DISABLED)
 
-show_linechart_Fronius_daily_button = ttk.Button(root, text='Show linechart Fronius daily', command=show_linechart_Fronius_daily, width=button_size1, style='Fronius.TButton')
+show_linechart_Fronius_daily_button = ttk.Button(root, text='Show energy generated linechart ', command=show_linechart_Fronius_daily, width=button_size1, style='Fronius.TButton')
 show_linechart_Fronius_daily_button.place(x=640, y=410)
 show_linechart_Fronius_daily_button.config(state=tk.DISABLED)
 
