@@ -15,7 +15,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from retry_requests import retry
 from matplotlib.ticker import FormatStrFormatter
 import seaborn as sns
-
+import customtkinter
 from tkcalendar import Calendar, DateEntry
 from dateutil.parser import parse
 
@@ -1185,15 +1185,8 @@ def show_current_weather():
         "timezone": "auto"
     }
     responses = openmeteo.weather_api(url, params=params)
-
-    # Process first location. Add a for-loop for multiple locations or weather models
     response = responses[0]
-    # print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
-    # print(f"Elevation {response.Elevation()} m asl")
-    # print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
-    # print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
-    # Current values. The order of variables needs to be the same as requested.
     current = response.Current()
     current_temperature_2m = current.Variables(0).Value()
     current_is_day = current.Variables(1).Value()
@@ -1202,15 +1195,6 @@ def show_current_weather():
     current_snowfall = current.Variables(4).Value()
     current_weather_code = current.Variables(5).Value()
     current_cloud_cover = current.Variables(6).Value()
-
-    # print(f"Current time {current.Time()}")
-    # print(f"Current temperature_2m {current_temperature_2m}")
-    # print(f"Current is_day {current_is_day}")
-    # print(f"Current rain {current_rain}")
-    # print(f"Current showers {current_showers}")
-    # print(f"Current snowfall {current_snowfall}")
-    # print(f"Current weather_code {current_weather_code}")
-    # print(f"Current cloud_cover {current_cloud_cover}")
 
     description = interpret_weather_code(str(int(current_weather_code)))
     sunny_image = Image.open("sunny.png")
@@ -1222,13 +1206,113 @@ def show_current_weather():
     weather_description_label =tk.Label(root,text=description)
     weather_description_label.pack()
     if current_is_day == 0.0:
-        weather_label = tk.Label(root, image=moon_image_tk)
+        weather_image = moon_image_tk
+        if description == "Overcast":
+            overcast_image = Image.open("overcast.png") # <a href="https://www.flaticon.com/free-icons/cloud" title="cloud icons">Cloud icons created by kosonicon - Flaticon</a>
+            overcast_image = overcast_image.resize((100, 100))
+            overcast_image_tk = ImageTk.PhotoImage(overcast_image)
+            weather_image = overcast_image_tk
+        if description == "Mainly clear" or description == "Partly cloudy":
+            partly_cloudy_image = Image.open("night_cloud.png.png") #<a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
+
+            partly_cloudy_image = partly_cloudy_image.resize((100, 100))
+            partly_cloudy_image_tk = ImageTk.PhotoImage(partly_cloudy_image)
+            weather_image = partly_cloudy_image_tk
+        if description == "Fog" or description == "Depositing rime fog":
+            fog_image = Image.open("fog.png")
+            fog_image = fog_image.resize((100, 100))
+            fog_image_tk = ImageTk.PhotoImage(fog_image) # <a href="https://www.flaticon.com/free-icons/fog" title="fog icons">Fog icons created by Dreamstale - Flaticon</a>
+            weather_image = fog_image_tk
+        if description == "Drizzle: Light intensity" or description == "Drizzle: Moderate intensity" or description == "Drizzle: Dense intensity":
+            drizzle_image = Image.open("drizzle.png")
+            drizzle_image = drizzle_image.resize((100, 100))
+            drizzle_image_tk = ImageTk.PhotoImage(drizzle_image) # <a href="https://www.flaticon.com/free-icons/weather-forecast" title="weather forecast icons">Weather forecast icons created by kosonicon - Flaticon</a>
+            weather_image = drizzle_image_tk
+        if description == "Freezing Drizzle: Light intensity" or description == "Freezing Drizzle: Dense intensity" or description == "Freezing Rain: Light intensity" or description == "Freezing Rain: Heavy intensity":
+            freezing_drizzle_image = Image.open("rain+snow.png")
+            freezing_drizzle_image = freezing_drizzle_image.resize((100, 100))
+            freezing_drizzle_image_tk = ImageTk.PhotoImage(freezing_drizzle_image) # <a href="https://www.flaticon.com/free-icons/snowfall" title="snowfall icons">Snowfall icons created by kosonicon - Flaticon</a>
+            weather_image = freezing_drizzle_image_tk
+        if description == "Rain showers: Slight intensity" or description == "Rain showers: Moderate intensity" or description == "Rain showers: Violent intensity":
+            rain_showers_image = Image.open("rain_showers.png") # <a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
+            rain_showers_image = rain_showers_image.resize((100, 100))
+            rain_showers_image_tk = ImageTk.PhotoImage(rain_showers_image)
+            weather_image = rain_showers_image_tk
+        if description == "Snow fall: Slight intensity" or description == "Snow fall: Moderate intensity" or description == "Snow fall: Heavy intensity" or description == "Snow grains":
+            snow_image = Image.open("snowfall.png") # <a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
+            snow_image = snow_image.resize((100, 100))
+            snow_image_tk = ImageTk.PhotoImage(snow_image)
+            weather_image = snow_image_tk
+        if description == "Snow showers: Slight intensity" or description == "Snow showers: Heavy intensity":
+            snow_showers_image = Image.open("snow_showers.png") # <a href="https://www.flaticon.com/free-icons/snow" title="snow icons">Snow icons created by kosonicon - Flaticon</a>
+            snow_showers_image = snow_showers_image.resize((100, 100))
+            snow_showers_image_tk = ImageTk.PhotoImage(snow_showers_image)
+            weather_image = snow_showers_image_tk
+        if description == "Thunderstorm: Slight or moderate" or description == "Thunderstorm with slight hail":
+            thunderstorm_image = Image.open("thunderstorm.png") # <a href="https://www.flaticon.com/free-icons/dark-cloud" title="dark cloud icons">Dark cloud icons created by kosonicon - Flaticon</a>
+            thunderstorm_image = thunderstorm_image.resize((100, 100))
+            thunderstorm_image_tk = ImageTk.PhotoImage(thunderstorm_image)
+            weather_image = thunderstorm_image_tk
+        weather_label = tk.Label(root, image=weather_image)
         weather_label.place(x=100,y=570)
-        weather_label.image = moon_image_tk
+        weather_label.image = weather_image
     else:
-        weather_label = tk.Label(root, image=sunny_image_tk)
+        weather_image = sunny_image_tk
+        if description == "Overcast":
+            overcast_image = Image.open("overcast.png") # <a href="https://www.flaticon.com/free-icons/cloud" title="cloud icons">Cloud icons created by kosonicon - Flaticon</a>
+            overcast_image = overcast_image.resize((100, 100))
+            overcast_image_tk = ImageTk.PhotoImage(overcast_image)
+            weather_image = overcast_image_tk
+        if description == "Mainly clear" or description == "Partly cloudy":
+            mainly_clear_image = Image.open("clear-sky.png") # <a href="https://www.flaticon.com/free-icons/sky" title="sky icons">Sky icons created by kosonicon - Flaticon</a>
+            mainly_clear_image = mainly_clear_image.resize((100, 100))
+            mainly_clear_image_tk = ImageTk.PhotoImage(mainly_clear_image)
+            weather_image = mainly_clear_image_tk
+        if description == "Fog" or description == "Depositing rime fog":
+            fog_image = Image.open("fog.png")
+            fog_image = fog_image.resize((100, 100))
+            fog_image_tk = ImageTk.PhotoImage(fog_image) # <a href="https://www.flaticon.com/free-icons/fog" title="fog icons">Fog icons created by Dreamstale - Flaticon</a>
+            weather_image = fog_image_tk
+        if description == "Drizzle: Light intensity" or description == "Drizzle: Moderate intensity" or description == "Drizzle: Dense intensity":
+            drizzle_image = Image.open("drizzle.png")
+            drizzle_image = drizzle_image.resize((100, 100))
+            drizzle_image_tk = ImageTk.PhotoImage(drizzle_image) # <a href="https://www.flaticon.com/free-icons/weather-forecast" title="weather forecast icons">Weather forecast icons created by kosonicon - Flaticon</a>
+            weather_image = drizzle_image_tk
+        if description == "Freezing Drizzle: Light intensity" or description == "Freezing Drizzle: Dense intensity" or description == "Freezing Rain: Light intensity" or description == "Freezing Rain: Heavy intensity":
+            freezing_drizzle_image = Image.open("rain+snow.png")
+            freezing_drizzle_image = freezing_drizzle_image.resize((100, 100))
+            freezing_drizzle_image_tk = ImageTk.PhotoImage(freezing_drizzle_image) # <a href="https://www.flaticon.com/free-icons/snowfall" title="snowfall icons">Snowfall icons created by kosonicon - Flaticon</a>
+            weather_image = freezing_drizzle_image_tk
+        if description == "Rain: Slight intensity" or description == "Rain: Moderate intensity" or description == "Rain: Heavy intensity":
+            rain_image = Image.open("rain.png")
+            rain_image = rain_image.resize((100, 100))
+            rain_image_tk = ImageTk.PhotoImage(rain_image) # <a href="https://www.flaticon.com/free-icons/weather-forecast" title="weather forecast icons">Weather forecast icons created by kosonicon - Flaticon</a>
+            weather_image = rain_image_tk
+        if description == "Rain showers: Slight intensity" or description == "Rain showers: Moderate intensity" or description == "Rain showers: Violent intensity":
+            rain_showers_image = Image.open("rain_showers.png") # <a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
+            rain_showers_image = rain_showers_image.resize((100, 100))
+            rain_showers_image_tk = ImageTk.PhotoImage(rain_showers_image)
+            weather_image = rain_showers_image_tk
+        if description == "Snow fall: Slight intensity" or description == "Snow fall: Moderate intensity" or description == "Snow fall: Heavy intensity" or description == "Snow grains":
+            snow_image = Image.open("snowfall.png") # <a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
+            snow_image = snow_image.resize((100, 100))
+            snow_image_tk = ImageTk.PhotoImage(snow_image)
+            weather_image = snow_image_tk
+        if description == "Snow showers: Slight intensity" or description == "Snow showers: Heavy intensity":
+            snow_showers_image = Image.open("snow_showers.png") # <a href="https://www.flaticon.com/free-icons/snow" title="snow icons">Snow icons created by kosonicon - Flaticon</a>
+            snow_showers_image = snow_showers_image.resize((100, 100))
+            snow_showers_image_tk = ImageTk.PhotoImage(snow_showers_image)
+            weather_image = snow_showers_image_tk
+        if description == "Thunderstorm: Slight or moderate" or description == "Thunderstorm with slight hail":
+            thunderstorm_image = Image.open("thunderstorm.png") # <a href="https://www.flaticon.com/free-icons/dark-cloud" title="dark cloud icons">Dark cloud icons created by kosonicon - Flaticon</a>
+            thunderstorm_image = thunderstorm_image.resize((100, 100))
+            thunderstorm_image_tk = ImageTk.PhotoImage(thunderstorm_image)
+            weather_image = thunderstorm_image_tk
+        weather_label = tk.Label(root, image=weather_image)
         weather_label.place(x=100,y=570)
-        weather_label.image = sunny_image_tk
+        weather_label.image = weather_image
+
+
     image_center = 150
     root.update()
     # Z jakiegoś powodu nie dało się bez tego dostaś szerokośći labelu
@@ -1285,7 +1369,6 @@ def show_weather_forecast():
     # subwindow = tk.Toplevel(root)
     # tk.Label(subwindow, text=str(daily_dataframe.to_string(index=False))).pack()
 
-
 def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
     lat, lon = get_coord()
     cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
@@ -1331,7 +1414,6 @@ def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
 
 
 def plot_weather_data(dataframe):
-
 
     fig, ax = plt.subplots(figsize=(10, 5))
 
@@ -1693,7 +1775,7 @@ style.configure('Custom.TButton', background='blue')
 style.configure('PGE.TButton', background='blue', darkcolor='blue', lightcolor='blue', bordercolor='blue')
 style.configure('Fronius.TButton', background='yellow', darkcolor='yellow', lightcolor='yellow', bordercolor='yellow')
 
-open_button = ttk.Button(root, text='Open PGE report', command=open_file, width=button_size, style='Custom.TButton')
+open_button = customtkinter.CTkButton(root, text='Open PGE report', command=open_file, width=button_size)
 open_button.place(x=340, y=40)
 
 open_button_Fronius_daily = ttk.Button(root, text='Open Fronius report', command=open_file_fronius_daily, width=button_size, style='Custom.TButton')
