@@ -28,6 +28,8 @@ import numpy as np
 import matplotlib.dates as mdates
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+import geocoder
+
 
 class Day:
     def __init__(self, KodPP, DataOdczytu, Kierunek, HourUsageList):
@@ -1170,7 +1172,7 @@ def interpret_weather_code(code):
 
 
 def show_current_weather():
-    lat, lon = get_coord()
+    lat, lon = get_coord_user()
     cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
@@ -1635,7 +1637,6 @@ def get_coord():
     # lat, lon = None, None
     city = city_entry.get()
     geolocator = Nominatim(user_agent="my_geocoder")
-
     try:
         location = geolocator.geocode(city, timeout=10)
         if location:
@@ -1649,6 +1650,11 @@ def get_coord():
         print(f"Geocoding service error: {e}")
         return None
 
+def get_coord_user():
+    # Wiem że już mam inną biblioteke ale z poprzednia dziwnie to działa więc jest to 
+    g = geocoder.ip('me')
+    lat, lon = g.latlng
+    return lat, lon
 def solar_energy_prediction_forecast():
     lat, lon = get_coord()
     plant_power = plant_power_entry.get()
