@@ -136,6 +136,8 @@ PGE_file_opened = False
 Fronius_file_opened = False
 Fronius_5_min_file_opened = False
 sns.set_theme(style="whitegrid")
+global window_opened
+window_opened = False
 
 #To jest potrzebne bo inaczej nie da sie normalnie poierac wartosci z tablic
 
@@ -171,10 +173,16 @@ def open_file():
     with open(filename) as input:
         csv_reader = csv.reader(input, delimiter=';')
         line_count = 0
-        parse_and_export_to_lists(csv_reader, line_count)
-        enable_PGE_related_buttons()
-        enable_PGE_and_Fronius_related_buttons()
-        unlock_dates()
+        error = False
+        try:
+            parse_and_export_to_lists(csv_reader, line_count)
+        except Exception as e:
+            messagebox.showerror("Wrong file", e)
+            error = True
+        if error == False:
+            enable_PGE_related_buttons()
+            enable_PGE_and_Fronius_related_buttons()
+            unlock_dates()
 
     # analyze_button.config(state=tk.DISABLED)
     #analyze_button.config(state=tk.NORMAL)
@@ -184,33 +192,45 @@ def open_file_fronius_daily():
     with open(filename) as input:
         csv_reader = csv.reader(input, delimiter=',')
         line_count = 0
-        parse_Fronius(csv_reader, line_count)
-        unlock_dates()
-        enable_Fronius_related_buttons()
-        enable_PGE_and_Fronius_related_buttons()
-        for instance in froniusDaily_production_list:
-            print(instance.DataOdczytu)
+        error = False
+        try:
+            parse_Fronius(csv_reader, line_count)
+        except Exception as e:
+            messagebox.showerror("Wrong file", e)
+            error = True
+        if error == False:
+            unlock_dates()
+            enable_Fronius_related_buttons()
+            enable_PGE_and_Fronius_related_buttons()
+        # for instance in froniusDaily_production_list:
+        #     print(instance.DataOdczytu)
 def open_file_fronius_5():
+
     filename = filedialog.askopenfilename()
 
     with open(filename) as input:
         csv_reader = csv.reader(input, delimiter=',')
         line_count = 0
-        parse_Fronius_5(csv_reader, line_count)
-        unlock_dates()
-        # enable_Fronius_related_buttons()
-
-        global Fronius_5_min_file_opened
-        Fronius_5_min_file_opened = True
-        enable_PGE_and_Fronius_related_buttons()
-
-        for instance in froniusMinute_prodcution_list:
-            print(instance.DataOdczytu)
+        error = False
+        try:
+            parse_Fronius_5(csv_reader, line_count)
+        except Exception as e:
+            messagebox.showerror("Wrong file", e)
+        if error == False:
+            unlock_dates()
+            global Fronius_5_min_file_opened
+            Fronius_5_min_file_opened = True
+            enable_PGE_and_Fronius_related_buttons()
+        #
+        # for instance in froniusMinute_prodcution_list:
+        #     print(instance.DataOdczytu)
 
 def open_file_custom_daily_report():
-
+    global window_opened
+    if window_opened == True:
+        return
+    window_opened = True
     subwindow = tk.Toplevel(root)
-
     delimiter_entry_label = tk.Label(subwindow, text='Enter delimiter :')
     delimiter_entry_label.pack()
     delimiter_entry = tk.Entry(subwindow)
@@ -265,7 +285,6 @@ def open_file_custom_daily_report():
             prewiew_label2.pack()
     def process_custom_daily_report():
         filename = filedialog.askopenfilename()
-        analyze_cutom_report_button.configure(state=tk.NORMAL)
         with open(filename) as input:
             csv_reader = csv.reader(input, delimiter=delimiter_entry.get())
             line_count = 0
@@ -301,7 +320,18 @@ def open_file_custom_daily_report():
 
         # for instance in froniusMinute_prodcution_list:
         #     print(instance.DataOdczytu)
-        unlock_dates()
+
+    def call_parse():
+        error = False
+        try:
+            process_custom_daily_report()
+        except Exception as e:
+            messagebox.showerror("Wrong file", e)
+            error = True
+        if error == False:
+            analyze_cutom_report_button.configure(state=tk.NORMAL)
+            unlock_dates()
+
     def analyze_cutom_report():
         start_date = parse(start_date_entry_cal.get_date()).strftime("%m/%d/%y")
         end_date = parse(end_date_entry_cal.get_date()).strftime("%m/%d/%y")
@@ -331,11 +361,7 @@ def open_file_custom_daily_report():
                 dateList.append(i.DataOdczytu)
             if i.DataOdczytu == end_date:
                 break
-        subwindow.destroy()
 
-        # print(len(analyzed_list))
-        # print(len(dailyProduction_list))
-        # print(len(dateList))
         plt.plot(dateList, dailyProduction_list)
         ax = plt.gca()
         plt.title(
@@ -346,17 +372,19 @@ def open_file_custom_daily_report():
         ax.xaxis.set_major_locator(mdates.AutoDateLocator())
         plt.gcf().autofmt_xdate()
         plt.gcf().canvas.manager.set_window_title('Custom report analysis')
-        subwindow.destroy()
         plt.show()
+        subwindow.destroy()
+        global window_opened
+        window_opened = False
         # subwindow.destroy()
 
-    open_file_button = tk.Button(subwindow, text='Open File', command=process_custom_daily_report)
+    open_file_button = tk.Button(subwindow, text='Open File', command=call_parse, width=17)
     open_file_button.pack()
     analyze_cutom_report_button = tk.Button(subwindow, text='Analyze custom report', command=analyze_cutom_report)
     analyze_cutom_report_button.configure(state='disabled')
     analyze_cutom_report_button.pack()
-    preview_button = tk.Button(subwindow, text='Preview', command=prewiew)
-    preview_button.pack()
+    # preview_button = tk.Button(subwindow, text='Preview', command=prewiew)
+    # preview_button.pack()
 
 def preview():
     preview_subwindow = tk.Toplevel(root)
@@ -533,7 +561,7 @@ def parse_and_export_to_lists(csv_reader, line_count):
     global balanced, energySold, energyBought
     for row in csv_reader:
         if line_count == 0:
-            print(row)
+            # print(row)
             line_count += 1
         else:
             # HourUsageList = [row[3]]
@@ -560,7 +588,7 @@ def parse_and_export_to_lists(csv_reader, line_count):
                 energyBought.append(day)
             line_count += 1
 
-    print(f'Total: {line_count} lines')
+    # print(f'Total: {line_count} lines')
 
 def parse_Fronius(csv_reader,line_count):
     global froniusDaily_production_list
@@ -734,6 +762,9 @@ def show_energy_price():
         if endDate == i.DataOdczytu:
             break
     if(configure_price_settings_called == False):
+        if not energy_price_spent_entry.get().strip() or not energy_price_generated_entry.get().strip():
+            messagebox.showerror("Error", "You have to configure price settings first")
+            return
         pricePerKwHSpent = Decimal(energy_price_spent_entry.get())
         pricePerKwHGenerated = Decimal(energy_price_generated_entry.get())
 
@@ -1216,7 +1247,6 @@ def show_current_weather():
             weather_image = overcast_image_tk
         if description == "Mainly clear" or description == "Partly cloudy":
             partly_cloudy_image = Image.open("night_cloud.png.png") #<a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
-
             partly_cloudy_image = partly_cloudy_image.resize((100, 100))
             partly_cloudy_image_tk = ImageTk.PhotoImage(partly_cloudy_image)
             weather_image = partly_cloudy_image_tk
@@ -1479,8 +1509,8 @@ def show_hourly_usage_linechart():
         if i.DataOdczytu == startDate:
             picked_day_spent = i
             break
-    print(picked_day_balanced.DataOdczytu)
-    print(picked_day_balanced.HourUsageList)
+    # print(picked_day_balanced.DataOdczytu)
+    # print(picked_day_balanced.HourUsageList)
     formatted_date = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
     plt.plot(labels, picked_day_balanced.HourUsageList, label='Balanced')
     plt.plot(labels, picked_day_generated.HourUsageList, label='Generated')
@@ -1496,9 +1526,9 @@ def show_fronius_sum():
     start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
     end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
 
-    print(start_date)
-    print(end_date)
-    print(froniusDaily_production_list[0].Daily_generated)
+    # print(start_date)
+    # print(end_date)
+    # print(froniusDaily_production_list[0].Daily_generated)
     sum_fronius = 0
     startDateReached = False
     for i in froniusDaily_production_list:
@@ -1651,7 +1681,7 @@ def get_coord():
         return None
 
 def get_coord_user():
-    # Wiem że już mam inną biblioteke ale z poprzednia dziwnie to działa więc jest to 
+    # Wiem że już mam inną biblioteke ale z poprzednia dziwnie to działa więc jest to
     g = geocoder.ip('me')
     lat, lon = g.latlng
     return lat, lon
@@ -1726,7 +1756,7 @@ def enable_PGE_and_Fronius_related_buttons():
     if PGE_file_opened == True and Fronius_file_opened == True:
         show_differnce_betweenFronius_and_PGE_daily_button.config(state=tk.NORMAL)
     if PGE_file_opened == True and Fronius_5_min_file_opened == True:
-        analyze_day_button.config(state=tk.NORMAL)
+        analyze_day_button.configure(state=tk.NORMAL)
 
 
 root = tk.Tk()
@@ -1780,22 +1810,24 @@ style = ttk.Style()
 style.configure('Custom.TButton', background='blue')
 style.configure('PGE.TButton', background='blue', darkcolor='blue', lightcolor='blue', bordercolor='blue')
 style.configure('Fronius.TButton', background='yellow', darkcolor='yellow', lightcolor='yellow', bordercolor='yellow')
+style.configure('PGEFronius.TButton', background='yellow', darkcolor='yellow', lightcolor='yellow', bordercolor='yellow')
+customtkinter.set_appearance_mode("System")
 
-open_button = customtkinter.CTkButton(root, text='Open PGE report', command=open_file, width=button_size)
+open_button = customtkinter.CTkButton(root, text='Open PGE report', command=open_file, width=250, height=25)
 open_button.place(x=340, y=40)
 
-open_button_Fronius_daily = ttk.Button(root, text='Open Fronius report', command=open_file_fronius_daily, width=button_size, style='Custom.TButton')
+open_button_Fronius_daily = customtkinter.CTkButton(root, text='Open Fronius report', command=open_file_fronius_daily, width=250, height=25, fg_color="#fdb038")
 open_button_Fronius_daily.place(x=340, y=70)
 
-open_button_Fronius_daily_15_minute_button = ttk.Button(root, text='Open Fronius 5 minute report', command=open_file_fronius_5, width=button_size, style='Custom.TButton')
+open_button_Fronius_daily_15_minute_button = customtkinter.CTkButton(root, text='Open Fronius 5 minute report', command=open_file_fronius_5, width=250, height=25, fg_color="#fdb038")
 open_button_Fronius_daily_15_minute_button.place(x=340, y=100)
 
-open_button_custom_daily_report = ttk.Button(root, text='Open Custom Report', command=open_file_custom_daily_report, width=button_size, style='Custom.TButton')
+open_button_custom_daily_report = customtkinter.CTkButton(root, text='Open Custom Report', command=open_file_custom_daily_report, width=250, height=25, fg_color="#f26161")
 open_button_custom_daily_report.place(x=340, y=130)
 
-analyze_day_button = ttk.Button(root, text='Analyze day', command=analyze_day, width=button_size, style='Custom.TButton')
+analyze_day_button = customtkinter.CTkButton(root, text='Analyze day', command=analyze_day, width=250, height=25, fg_color="grey")
 analyze_day_button.place(x=340, y=160)
-analyze_day_button.config(state=tk.DISABLED)
+analyze_day_button.configure(state=tk.DISABLED)
 
 # preview_report_button = ttk.Button(root, text='Preview report', command=preview, width=button_size, style='Custom.TButton')
 # preview_report_button.place(x=340, y=190)
@@ -1825,11 +1857,11 @@ show_sum_button.place(x=640, y=160)
 
 # tk.Label(root, text="Default pricing model is W11 without additional costs").place(x=640, y=180)
 tk.Label(root, text="Price per KwH Spent:").place(x=640, y=190)
-energy_price_spent_entry = tk.Entry(root)
+energy_price_spent_entry = tk.Entry(root, width=31)
 energy_price_spent_entry.place(x=640, y=210)
 
 tk.Label(root, text="Price per KwH Generated:").place(x=640, y=240)
-energy_price_generated_entry = tk.Entry(root)
+energy_price_generated_entry = tk.Entry(root, width=31)
 energy_price_generated_entry.place(x=640, y=260)
 
 show_energy_price_button = ttk.Button(root, text='Show energy price spent', command=show_energy_price, width=button_size1, style='PGE.TButton')
@@ -1852,8 +1884,8 @@ show_linechart_Fronius_daily_button = ttk.Button(root, text='Show linechart Fron
 show_linechart_Fronius_daily_button.place(x=640, y=410)
 show_linechart_Fronius_daily_button.config(state=tk.DISABLED)
 
-show_differnce_betweenFronius_and_PGE_daily_button = ttk.Button(root, text='Show differnce between Fronius and PGE data ',
-                                                                command=show_differnce_betweenFronius_and_PGE_daily, style='Fronius.TButton')
+show_differnce_betweenFronius_and_PGE_daily_button = ttk.Button(root, text='Show differnce between\n Fronius and PGE data ', width=30,
+                                                                command=show_differnce_betweenFronius_and_PGE_daily, style='Fronius.TButton' )
 show_differnce_betweenFronius_and_PGE_daily_button.place(x=640, y=440)
 show_differnce_betweenFronius_and_PGE_daily_button.config(state=tk.DISABLED)
 
@@ -1861,11 +1893,11 @@ show_differnce_betweenFronius_and_PGE_daily_button.config(state=tk.DISABLED)
 # display_graph_button.place(x=640, y=420)
 
 city_label = ttk.Label(root, text="Enter City: ")
-city_label.place(x=640, y=470)
+city_label.place(x=640, y=490)
 
-city_entry = ttk.Entry(root, width=20)
+city_entry = ttk.Entry(root, width=30)
 city_entry.insert(0, "Lublin")
-city_entry.place(x=640, y=490)
+city_entry.place(x=640, y=510)
 
 show_weather_history_button = ttk.Button(root, text='Show weather history', command=show_weather_history, width=button_size1)
 show_weather_history_button.place(x=870, y=40)
@@ -1879,9 +1911,11 @@ show_current_weather_button = ttk.Button(root, text='Show current weather', comm
 # show_hourly_usage_linechart_button = ttk.Button(root, text='Show hourly usage linechart', command=show_hourly_usage_linechart, width=button_size1)
 # show_hourly_usage_linechart_button.place(x=870, y=130)
 
-tk.Label(root, text="Enter plant power:").place(x=870, y=100)
-plant_power_entry = tk.Entry(root)
+tk.Label(root, text="Enter plant power: kWh").place(x=870, y=100)
+plant_power_entry = tk.Entry(root, width=31)
 plant_power_entry.place(x=870, y=120)
+plant_power_entry.insert(0, "8")
+
 
 solar_energy_prediction_forecast_button = ttk.Button(root, text='Solar energy prediction forecast', command=solar_energy_prediction_forecast, width=button_size1)
 solar_energy_prediction_forecast_button.place(x=870, y=150)
