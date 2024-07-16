@@ -169,7 +169,7 @@ def unlock_dates():
 
 def open_file():
     # global filename
-    filename = filedialog.askopenfilename()
+    filename = filedialog.askopenfilename(defaultextension=".csv", filetypes=[("CSV Files", "*.csv")])
     with open(filename) as input:
         csv_reader = csv.reader(input, delimiter=';')
         line_count = 0
@@ -188,7 +188,7 @@ def open_file():
     #analyze_button.config(state=tk.NORMAL)
 
 def open_file_fronius_daily():
-    filename = filedialog.askopenfilename()
+    filename = filedialog.askopenfilename(defaultextension=".csv", filetypes=[("CSV Files", "*.csv")])
     with open(filename) as input:
         csv_reader = csv.reader(input, delimiter=',')
         line_count = 0
@@ -206,7 +206,7 @@ def open_file_fronius_daily():
         #     print(instance.DataOdczytu)
 def open_file_fronius_5():
 
-    filename = filedialog.askopenfilename()
+    filename = filedialog.askopenfilename(defaultextension=".csv", filetypes=[("CSV Files", "*.csv")])
 
     with open(filename) as input:
         csv_reader = csv.reader(input, delimiter=',')
@@ -1743,24 +1743,24 @@ def solar_energy_prediction_forecast():
 def enable_PGE_related_buttons():
     global PGE_file_opened
     PGE_file_opened = True
-    show_line_graph_button.config(state=tk.NORMAL)
-    show_stacks_button_balanced.config(state=tk.NORMAL)
-    show_stacks_button_generated.config(state=tk.NORMAL)
-    show_stacks_button_spent.config(state=tk.NORMAL)
-    show_sum_button.config(state=tk.NORMAL)
-    show_energy_price_button.config(state=tk.NORMAL)
-    configure_energy_price_settings_button.config(state=tk.NORMAL)
+    show_line_graph_button.configure(state=tk.NORMAL)
+    show_stacks_button_balanced.configure(state=tk.NORMAL)
+    show_stacks_button_generated.configure(state=tk.NORMAL)
+    show_stacks_button_spent.configure(state=tk.NORMAL)
+    show_sum_button.configure(state=tk.NORMAL)
+    show_energy_price_button.configure(state=tk.NORMAL)
+    configure_energy_price_settings_button.configure(state=tk.NORMAL)
 
 def enable_Fronius_related_buttons():
     global Fronius_file_opened
     Fronius_file_opened = True
-    show_fronius_sum_button.config(state=tk.NORMAL)
-    show_stacks_Fronius_daily_button.config(state=tk.NORMAL)
-    show_linechart_Fronius_daily_button.config(state=tk.NORMAL)
+    show_fronius_sum_button.configure(state=tk.NORMAL)
+    show_stacks_Fronius_daily_button.configure(state=tk.NORMAL)
+    show_linechart_Fronius_daily_button.configure(state=tk.NORMAL)
 
 def enable_PGE_and_Fronius_related_buttons():
     if PGE_file_opened == True and Fronius_file_opened == True:
-        show_differnce_betweenFronius_and_PGE_daily_button.config(state=tk.NORMAL)
+        show_differnce_betweenFronius_and_PGE_daily_button.configure(state=tk.NORMAL)
     if PGE_file_opened == True and Fronius_5_min_file_opened == True:
         analyze_day_button.configure(state=tk.NORMAL)
 
@@ -1810,13 +1810,15 @@ start_date_entry_cal.config(state='disabled')
 end_date_entry_cal.config(state='disabled')
 
 # PGE related stuff
-button_size = 40
+button_size = 45
 style = ttk.Style()
-# style.theme_use('alt')
+
 style.configure('Custom.TButton', background='blue')
-style.configure('PGE.TButton', background='blue', darkcolor='blue', lightcolor='blue', bordercolor='blue')
+style.configure('PGE.TButton', background='blue', darkcolor='blue', lightcolor='blue', bordercolor='blue', relief='solid')
 style.configure('Fronius.TButton', background='yellow', darkcolor='yellow', lightcolor='yellow', bordercolor='yellow')
 style.configure('PGEFronius.TButton', background='yellow', darkcolor='yellow', lightcolor='yellow', bordercolor='yellow')
+
+
 customtkinter.set_appearance_mode("System")
 
 open_button = customtkinter.CTkButton(root, text='Open PGE report', command=open_file, width=250, height=25)
@@ -1839,24 +1841,24 @@ analyze_day_button.configure(state=tk.DISABLED)
 # preview_report_button.place(x=340, y=190)
 
 button_size1 = 30
-show_line_graph_button = ttk.Button(root, text='Show PGE report line graph', command=show_line_graph, width=button_size1, style='PGE.TButton')
+show_line_graph_button = customtkinter.CTkButton(root, text='Show PGE report line graph', command=show_line_graph, width=210, height=25)
 show_line_graph_button.place(x=640, y=40)
-show_line_graph_button.config(state=tk.DISABLED)
+show_line_graph_button.configure(state=tk.DISABLED)
 
-show_stacks_button_balanced = ttk.Button(root, text='Show stacks balanced', command=show_stacks_balanced, width=button_size1, style='PGE.TButton')
+show_stacks_button_balanced = customtkinter.CTkButton(root, text='Show stacks balanced', command=show_stacks_balanced, width=210, height=25)
 show_stacks_button_balanced.place(x=640, y=70)
-show_stacks_button_balanced.config(state=tk.DISABLED)
+show_stacks_button_balanced.configure(state=tk.DISABLED)
 
-show_stacks_button_generated = ttk.Button(root, text='Show energy given to network', command=show_stacks_generated, width=button_size1, style='PGE.TButton')
+show_stacks_button_generated = customtkinter.CTkButton(root, text='Show energy given to network', command=show_stacks_generated, width=210, height=25)
 show_stacks_button_generated.place(x=640, y=100)
-show_stacks_button_generated.config(state=tk.DISABLED)
+show_stacks_button_generated.configure(state=tk.DISABLED)
 
-show_stacks_button_spent = ttk.Button(root, text='Show energy taken from network', command=show_stacks_spent, width=button_size1, style='PGE.TButton')
+show_stacks_button_spent = customtkinter.CTkButton(root, text='Show energy taken from network', command=show_stacks_spent, width=210, height=25)
 show_stacks_button_spent.place(x=640, y=130)
-show_stacks_button_spent.config(state=tk.DISABLED)
+show_stacks_button_spent.configure(state=tk.DISABLED)
 
-show_sum_button = ttk.Button(root, text='Show PGE report summary', command=show_sum, width=button_size1, style='PGE.TButton')
-show_sum_button.config(state=tk.DISABLED)
+show_sum_button = customtkinter.CTkButton(root, text='Show PGE report summary', command=show_sum, width=210, height=25)
+show_sum_button.configure(state=tk.DISABLED)
 show_sum_button.place(x=640, y=160)
 
 
@@ -1870,30 +1872,30 @@ tk.Label(root, text="Price per KwH Generated:").place(x=640, y=240)
 energy_price_generated_entry = tk.Entry(root, width=31)
 energy_price_generated_entry.place(x=640, y=260)
 
-show_energy_price_button = ttk.Button(root, text='Show energy price spent', command=show_energy_price, width=button_size1, style='PGE.TButton')
+show_energy_price_button = customtkinter.CTkButton(root, text='Show energy price spent', command=show_energy_price, width=210, height=25)
 show_energy_price_button.place(x=640, y=290)
-show_energy_price_button.config(state=tk.DISABLED)
+show_energy_price_button.configure(state=tk.DISABLED)
 
-configure_energy_price_settings_button = ttk.Button(root, text='Add additional price settings ', command=configure_price_settings, width=button_size1, style='PGE.TButton')
+configure_energy_price_settings_button = customtkinter.CTkButton(root, text='Add additional price settings ', command=configure_price_settings, width=210, height=25)
 configure_energy_price_settings_button.place(x=640, y=320)
-configure_energy_price_settings_button.config(state=tk.DISABLED)
+configure_energy_price_settings_button.configure(state=tk.DISABLED)
 
-show_fronius_sum_button = ttk.Button(root, text='Show Fronius report summary', command=show_fronius_sum, width=button_size1, style='Fronius.TButton')
+show_fronius_sum_button = customtkinter.CTkButton(root, text='Show Fronius report summary', command=show_fronius_sum, width=210, height=25, fg_color="#fdfa72")
 show_fronius_sum_button.place(x=640, y=350)
-show_fronius_sum_button.config(state=tk.DISABLED)
+show_fronius_sum_button.configure(state=tk.DISABLED)
 
-show_stacks_Fronius_daily_button = ttk.Button(root, text='Show energy generated as stacks ', command=show_stacks_Fronius_daily, width=button_size1, style='Fronius.TButton')
+show_stacks_Fronius_daily_button = customtkinter.CTkButton(root, text='Show energy generated as stacks ', command=show_stacks_Fronius_daily, width=210, height=25, fg_color="#fdfa72")
 show_stacks_Fronius_daily_button.place(x=640, y=380)
-show_stacks_Fronius_daily_button.config(state=tk.DISABLED)
+show_stacks_Fronius_daily_button.configure(state=tk.DISABLED)
 
-show_linechart_Fronius_daily_button = ttk.Button(root, text='Show energy generated linechart ', command=show_linechart_Fronius_daily, width=button_size1, style='Fronius.TButton')
+show_linechart_Fronius_daily_button = customtkinter.CTkButton(root, text='Show energy generated linechart ', command=show_linechart_Fronius_daily,  width=210, height=25, fg_color="#fdfa72")
 show_linechart_Fronius_daily_button.place(x=640, y=410)
-show_linechart_Fronius_daily_button.config(state=tk.DISABLED)
+show_linechart_Fronius_daily_button.configure(state=tk.DISABLED)
 
-show_differnce_betweenFronius_and_PGE_daily_button = ttk.Button(root, text='Show differnce between\n Fronius and PGE data ', width=30,
-                                                                command=show_differnce_betweenFronius_and_PGE_daily, style='Fronius.TButton' )
+show_differnce_betweenFronius_and_PGE_daily_button = customtkinter.CTkButton(root, text='Show differnce between\n Fronius and PGE data ',
+                                                                command=show_differnce_betweenFronius_and_PGE_daily, width=210, height=25, fg_color="#fdfa72")
 show_differnce_betweenFronius_and_PGE_daily_button.place(x=640, y=440)
-show_differnce_betweenFronius_and_PGE_daily_button.config(state=tk.DISABLED)
+show_differnce_betweenFronius_and_PGE_daily_button.configure(state=tk.DISABLED)
 
 # display_graph_button = ttk.Button(root, text='Display Graph')
 # display_graph_button.place(x=640, y=420)
