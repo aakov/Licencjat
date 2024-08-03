@@ -455,6 +455,7 @@ def analyze_day():
         # print(picked_day_balanced.DataOdczytu)
         # print(picked_day_balanced.HourUsageList)
         formatted_date = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
+        plt.figure()
         plt.plot(labels, picked_day_balanced.HourUsageList, label='Balanced')
         plt.plot(labels, picked_day_generated.HourUsageList, label='Generated')
         plt.plot(labels, picked_day_spent.HourUsageList, label='Spent')
@@ -474,6 +475,7 @@ def analyze_day():
             messagebox.showerror("Error No objects found with date ", date)
         else:
             labels = list(range(0, 24))
+            plt.figure()
             plt.plot(labels, day.HourUsageList, label='Produced Fronius')
             plt.xlabel('Hour')
             plt.ylabel('WH')
@@ -489,7 +491,7 @@ def analyze_day():
     open_button_show_hourly_usage_linechart_day.pack()
     show_fronius_hourly_button = ttk.Button(subwindow, text='Show fronius linechart hourly ', command=show_fronius_hourly,width = 30)
     show_fronius_hourly_button.pack()
-    show_weather_temp_button = ttk.Button(subwindow, text='Show weather temperature', command=show_weather_temp, width = 30)
+    show_weather_temp_button = ttk.Button(subwindow, text='Show weather ', command=show_weather_temp, width = 30)
     show_weather_temp_button.pack()
     subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
 
@@ -694,12 +696,10 @@ def show_sum():
     # plt.xlabel('Categories')
     plt.ylabel('Values')
     plt.title('Total energy consumption between ' + startDate + '-' + endDate)
-
+    plt.gcf().canvas.manager.set_window_title('PGE report analysis')
     for bar, value in zip(bars, values):
         plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
 
-    print(energySold[0].DailySum)
-    print(startDate)
     plt.show()
 
 global configure_price_settings_called
@@ -731,13 +731,14 @@ def show_energy_price():
     startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
     endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
     numberOfDays = 0
-    startDateReached = False
-    balancedSum = 0
-    print(balanced[0].DailySum)
+
+    # print(balanced[0].DailySum)
     balanced_processed = []
     energySold_processed = []
     energyBought_processed = []
 
+    startDateReached = False
+    balancedSum = 0
     for i in balanced:
         if i.DataOdczytu == startDate:
             startDateReached = True
@@ -767,19 +768,20 @@ def show_energy_price():
             energyBought_processed.append(i)
         if endDate == i.DataOdczytu:
             break
-    if(configure_price_settings_called == False):
+
+    if(cena_zalezna_od_godziny == False):
         if not energy_price_spent_entry.get().strip() or not energy_price_generated_entry.get().strip():
             messagebox.showerror("Error", "You have to configure price settings first")
             return
         pricePerKwHSpent = Decimal(energy_price_spent_entry.get())
         pricePerKwHGenerated = Decimal(energy_price_generated_entry.get())
 
-
     priceSold = energySoldSum * pricePerKwHGenerated
     priceBought = energyBoughtSum * pricePerKwHSpent
     priceFinal = priceBought - priceSold
+    print(priceFinal)
     if(configure_price_settings_called == True):
-        print(cena_zalezna_od_godziny)
+        # print(cena_zalezna_od_godziny)
         if(cena_zalezna_od_godziny == True):
            balanced_day_price_sum = 0
            balanced_night_price_sum = 0
@@ -833,7 +835,7 @@ def show_energy_price():
     # plt.xlabel('Categories')
     plt.ylabel('Values')
     plt.title('Total energy consumption between ' + startDate + '-' + endDate)
-
+    plt.gcf().canvas.manager.set_window_title('PGE report analysis')
     for bar, value in zip(bars, values):
         plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), str(value), ha='center', va='bottom')
 
@@ -915,10 +917,13 @@ def configure_price_settings():
         if fixedChargeExistsBooleanVar.get() == True:
             global fixedDailyCharge, fixedHourlyCharge
             global fixedChargeExists
-            fixedChargeExists = fixedChargeExistsBooleanVar.get()
-            fixedDailyCharge = Decimal(fixedDailyCharge_entry.get())
-            # print(fixedDailyCharge)
-            fixedHourlyCharge = Decimal(fixedHourlyCharge_entry.get())
+            try:
+                fixedChargeExists = fixedChargeExistsBooleanVar.get()
+                fixedDailyCharge = Decimal(fixedDailyCharge_entry.get())
+                # print(fixedDailyCharge)
+                fixedHourlyCharge = Decimal(fixedHourlyCharge_entry.get())
+            except Exception as e:
+                messagebox.showerror("Error", e)
         if cena_zalezna_od_godzinyBooleanVar.get() == True:
             global dzienna_stawka_pobrane, dzienna_stawka_oddane, nocna_stawka_pobrane, nocna_stawka_oddane
             global cena_zalezna_od_godziny
@@ -1101,7 +1106,7 @@ def show_line_graph():
     balanced_dateList = [datetime.strptime(date, '%Y%m%d') for date in balanced_dateList]
     generated_dateList = [datetime.strptime(date, '%Y%m%d') for date in generated_dateList]
     spent_dateList = [datetime.strptime(date, '%Y%m%d') for date in spent_dateList]
-
+    plt.figure()
     plt.plot(balanced_dateList, balanced_dailySumList, label='Balanced ')
     plt.plot(generated_dateList, generated_dailySumList, label='Sold')
     plt.plot(spent_dateList, spent_dailySumList, label='Bought')
@@ -1385,7 +1390,6 @@ def show_weather_forecast():
     # print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
     # print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
-    # Process daily data. The order of variables needs to be the same as requested.
     daily = response.Daily()
     daily_weather_code = daily.Variables(0).ValuesAsNumpy()
     daily_temperature_2m_max = daily.Variables(1).ValuesAsNumpy()
@@ -1409,6 +1413,8 @@ def show_weather_forecast():
 
 def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
     lat, lon = get_coord()
+
+    # Kod przeważnie z dokumentacji
     cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
@@ -1452,22 +1458,21 @@ def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
 
 
 def plot_weather_data(dataframe):
-
+    # Tu spróbowałem nowej bibloiteki
     fig, ax = plt.subplots(figsize=(10, 5))
 
     sns.lineplot(x="Date", y="Max", data=dataframe, label="Max Temp", ax=ax, color="red", marker="o")
-    sns.lineplot(x="Date", y="Min", data=dataframe, label="Min Temp", ax=ax, color="blue", marker="x")
+    sns.lineplot(x="Date", y="Min", data=dataframe, label="Min Temp", ax=ax, color="blue", marker="o")
 
-    # Customizing the plot using Matplotlib
-    ax.set_title('Daily Temperature Forecast')
+    fig.canvas.manager.set_window_title('Weather')
+    ax.set_title('Weather')
     ax.set_xlabel('Date')
     ax.set_ylabel('Temperature (°C)')
     ax.legend(title='Temperature')
 
-    # Adding gridlines
-    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.grid(True, which='both')
 
-    # Rotating x-axis labels
+
     plt.xticks(rotation=45)
 
     max_temp = dataframe["Max"].iloc[0]
@@ -1518,6 +1523,7 @@ def show_hourly_usage_linechart():
     # print(picked_day_balanced.DataOdczytu)
     # print(picked_day_balanced.HourUsageList)
     formatted_date = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
+    plt.figure()
     plt.plot(labels, picked_day_balanced.HourUsageList, label='Balanced')
     plt.plot(labels, picked_day_generated.HourUsageList, label='Generated')
     plt.plot(labels, picked_day_spent.HourUsageList, label='Spent')
@@ -1603,7 +1609,7 @@ def show_linechart_Fronius_daily():
             dateList.append(i.DataOdczytu)
         if i.DataOdczytu == end_date:
             break
-
+    plt.figure()
     plt.plot(dateList, dailyProduction_list)
     ax = plt.gca()
     plt.title('Energy generation between ' + start_date_entry_cal.get_date() + ' and ' + end_date_entry_cal.get_date())
@@ -1865,11 +1871,11 @@ show_sum_button.place(x=640, y=160)
 
 # tk.Label(root, text="Default pricing model is W11 without additional costs").place(x=640, y=180)
 tk.Label(root, text="Price per KwH Spent:").place(x=640, y=190)
-energy_price_spent_entry = tk.Entry(root, width=31)
+energy_price_spent_entry = customtkinter.CTkEntry(root, width=210, height=10)
 energy_price_spent_entry.place(x=640, y=210)
 
 tk.Label(root, text="Price per KwH Generated:").place(x=640, y=240)
-energy_price_generated_entry = tk.Entry(root, width=31)
+energy_price_generated_entry = customtkinter.CTkEntry(root, width=210, height=10)
 energy_price_generated_entry.place(x=640, y=260)
 
 show_energy_price_button = customtkinter.CTkButton(root, text='Show energy price spent', command=show_energy_price, width=210, height=25)
@@ -1880,20 +1886,20 @@ configure_energy_price_settings_button = customtkinter.CTkButton(root, text='Add
 configure_energy_price_settings_button.place(x=640, y=320)
 configure_energy_price_settings_button.configure(state=tk.DISABLED)
 
-show_fronius_sum_button = customtkinter.CTkButton(root, text='Show Fronius report summary', command=show_fronius_sum, width=210, height=25, fg_color="#fdfa72")
+show_fronius_sum_button = customtkinter.CTkButton(root, text='Show Fronius report summary', command=show_fronius_sum, width=210, height=25, fg_color="#fdfa72", text_color="black")
 show_fronius_sum_button.place(x=640, y=350)
 show_fronius_sum_button.configure(state=tk.DISABLED)
 
-show_stacks_Fronius_daily_button = customtkinter.CTkButton(root, text='Show energy generated as stacks ', command=show_stacks_Fronius_daily, width=210, height=25, fg_color="#fdfa72")
+show_stacks_Fronius_daily_button = customtkinter.CTkButton(root, text='Show energy generated as stacks ', command=show_stacks_Fronius_daily, width=210, height=25, fg_color="#fdfa72", text_color="black")
 show_stacks_Fronius_daily_button.place(x=640, y=380)
 show_stacks_Fronius_daily_button.configure(state=tk.DISABLED)
 
-show_linechart_Fronius_daily_button = customtkinter.CTkButton(root, text='Show energy generated linechart ', command=show_linechart_Fronius_daily,  width=210, height=25, fg_color="#fdfa72")
+show_linechart_Fronius_daily_button = customtkinter.CTkButton(root, text='Show energy generated linechart ', command=show_linechart_Fronius_daily,  width=210, height=25, fg_color="#fdfa72", text_color="black")
 show_linechart_Fronius_daily_button.place(x=640, y=410)
 show_linechart_Fronius_daily_button.configure(state=tk.DISABLED)
 
 show_differnce_betweenFronius_and_PGE_daily_button = customtkinter.CTkButton(root, text='Show differnce between\n Fronius and PGE data ',
-                                                                command=show_differnce_betweenFronius_and_PGE_daily, width=210, height=25, fg_color="#fdfa72")
+                                                                command=show_differnce_betweenFronius_and_PGE_daily, width=210, height=25, fg_color="#fdfa72", text_color="black")
 show_differnce_betweenFronius_and_PGE_daily_button.place(x=640, y=440)
 show_differnce_betweenFronius_and_PGE_daily_button.configure(state=tk.DISABLED)
 
@@ -1903,30 +1909,34 @@ show_differnce_betweenFronius_and_PGE_daily_button.configure(state=tk.DISABLED)
 city_label = ttk.Label(root, text="Enter City: ")
 city_label.place(x=640, y=490)
 
-city_entry = ttk.Entry(root, width=30)
+city_entry = customtkinter.CTkEntry(root, width=210, height=10)
 city_entry.insert(0, "Lublin")
 city_entry.place(x=640, y=510)
 
-show_weather_history_button = ttk.Button(root, text='Show weather history', command=show_weather_history, width=button_size1)
-show_weather_history_button.place(x=870, y=40)
+show_weather_history_button = customtkinter.CTkButton(root, text='Show weather history', command=show_weather_history, width=210, height=25, fg_color="light blue",
+                                                      text_color="black")
+show_weather_history_button.place(x=890, y=40)
 
-show_weather_forecast_button = ttk.Button(root, text='Show 7 day weather forecast', command=show_weather_forecast, width=button_size1)
-show_weather_forecast_button.place(x=870, y=70)
+show_weather_forecast_button = customtkinter.CTkButton(root, text='Show 7 day weather forecast', command=show_weather_forecast, width=210, height=25, fg_color="light blue",
+                                                      text_color="black")
+show_weather_forecast_button.place(x=890, y=70)
 
-show_current_weather_button = ttk.Button(root, text='Show current weather', command=show_current_weather(), width=button_size1)
+show_current_weather_button = customtkinter.CTkButton(root, text='Show current weather', command=show_current_weather(), width=210, height=25, fg_color="light blue",
+                                                      text_color="black")
 # show_current_weather_button.place(x=870, y=100)
 
 # show_hourly_usage_linechart_button = ttk.Button(root, text='Show hourly usage linechart', command=show_hourly_usage_linechart, width=button_size1)
 # show_hourly_usage_linechart_button.place(x=870, y=130)
 
-tk.Label(root, text="Enter plant power: kWh").place(x=870, y=100)
-plant_power_entry = tk.Entry(root, width=31)
-plant_power_entry.place(x=870, y=120)
+tk.Label(root, text="Enter plant power: kWh").place(x=890, y=100)
+plant_power_entry = customtkinter.CTkEntry(root, width=210, height=10)
+plant_power_entry.place(x=890, y=120)
 plant_power_entry.insert(0, "8")
 
 
-solar_energy_prediction_forecast_button = ttk.Button(root, text='Solar energy prediction forecast', command=solar_energy_prediction_forecast, width=button_size1)
-solar_energy_prediction_forecast_button.place(x=870, y=150)
+solar_energy_prediction_forecast_button = customtkinter.CTkButton(root, text='Solar energy prediction forecast', command=solar_energy_prediction_forecast,  width=210, height=25, fg_color="light blue",
+                                                      text_color="black")
+solar_energy_prediction_forecast_button.place(x=890, y=160)
 
 # get_coord_button = ttk.Button(root, text='Get coord', command=get_coord, width=button_size1)
 # get_coord_button.place(x=640, y=700)
