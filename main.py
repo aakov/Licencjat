@@ -1,6 +1,6 @@
 import csv
 import math
-from calendar import Calendar
+# from calendar import Calendar
 from tkinter import *
 from tkinter import filedialog, ttk, messagebox
 import openmeteo_requests
@@ -16,12 +16,10 @@ from retry_requests import retry
 from matplotlib.ticker import FormatStrFormatter
 import seaborn as sns
 import customtkinter
-from tkcalendar import Calendar, DateEntry
 from dateutil.parser import parse
 
 import tkinter as tk
 from tkcalendar import *
-from tkcalendar import Calendar
 import matplotlib.pyplot as plt
 from decimal import Decimal
 import numpy as np
@@ -1777,6 +1775,11 @@ root.title("Energy consumption and generation report visualizer")
 # Menu
 menubar = tk.Menu(root)
 
+icon = tk.PhotoImage(file="sunny.png")
+root.iconphoto(False, icon)
+
+root.resizable(False, False)
+ 
 # File menu
 file_menu = tk.Menu(menubar, tearoff=0)
 file_menu.add_command(label="Open PGE report ", command=open_file)
