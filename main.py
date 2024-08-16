@@ -256,10 +256,10 @@ def open_file_custom_daily_report():
     selected_report_type.set(report_types[0])
     report_type_selector = tk.OptionMenu(subwindow, selected_report_type, *report_types)
     report_type_selector.pack()
-    power_format_entry_label = tk.Label(subwindow, text='Enter power format : WH, kWH')
+    power_format_entry_label = tk.Label(subwindow, text='Enter power format : Wh, kWh')
     power_format_entry_label.pack()
     power_format_entry = tk.Entry(subwindow)
-    power_format_entry.insert(0, 'kWH')
+    power_format_entry.insert(0, 'kWh')
     power_format_entry.pack()
 
     def prewiew():
@@ -462,6 +462,8 @@ def analyze_day():
         plt.legend()
         plt.title('Hourly usage on ' + str(formatted_date))
         plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+        plt.gcf().autofmt_xdate()
+        plt.gcf().canvas.manager.set_window_title('PGE report analysis')
         plt.show()
 
     def show_fronius_hourly():
@@ -479,15 +481,17 @@ def analyze_day():
             plt.ylabel('WH')
             plt.legend()
             plt.title('Hourly usage on ' + str(date))
+            plt.gcf().autofmt_xdate()
+            plt.gcf().canvas.manager.set_window_title('Fronius report analysis')
             plt.show()
 
     def show_weather_temp():
         show_weather_hourly_1day(date)
 
 
-    open_button_show_hourly_usage_linechart_day = ttk.Button(subwindow, text='Show hourly usage linechart day', command=show_hourly_usage_linechart_day, width = 30)
+    open_button_show_hourly_usage_linechart_day = ttk.Button(subwindow, text='Show PGE report hourly', command=show_hourly_usage_linechart_day, width = 30)
     open_button_show_hourly_usage_linechart_day.pack()
-    show_fronius_hourly_button = ttk.Button(subwindow, text='Show fronius linechart hourly ', command=show_fronius_hourly,width = 30)
+    show_fronius_hourly_button = ttk.Button(subwindow, text='Show Fronius report hourly ', command=show_fronius_hourly,width = 30)
     show_fronius_hourly_button.pack()
     show_weather_temp_button = ttk.Button(subwindow, text='Show weather ', command=show_weather_temp, width = 30)
     show_weather_temp_button.pack()
@@ -547,10 +551,13 @@ def show_weather_hourly_1day(date):
     )}
     daily_data["sunshine_duration"] = daily_sunshine_duration
     labels = list(range(0, 24))
+    plt.figure()
     plt.plot(labels, hourly_temperature_2m, label='Temperature')
     plt.xlabel('Hour')
     plt.ylabel('°C')
     plt.legend()
+    plt.gcf().autofmt_xdate()
+    plt.gcf().canvas.manager.set_window_title('Weather')
     plt.title('Temperature on ' + str(date))
     plt.show()
     # plt.figure(figsize=(10, 6))
@@ -684,7 +691,7 @@ def show_sum():
     print(spentSum)
 
     values = [balancedSum, generatedSum, spentSum]
-    labels = ['En. Czynna zbilansowana', 'En.Czynna Oddana', 'En.Czynna Pobrana']
+    labels = ['Energy balanced ', 'Energy Given', 'Energy Taken']
     colors = ['blue', 'green', 'red']
     # Create a bar chart
     bars = plt.bar(labels, values, color=colors)
@@ -814,13 +821,13 @@ def show_energy_price():
                 priceBought = buying_price_reward_or_penalty_after_limit + priceBought
             priceFinal = priceBought - priceSold
     values = [priceFinal, priceSold, priceBought]
-    labels = ['Cena finalna', 'Cena energi oddanej', 'Cena energii pobranej']
+    labels = ['Final cost', 'Cost of energy given ', 'Cost of energy taken']
     colors = ['blue', 'green', 'red']
     if fixedChargeExists == True:
         values.append(fixedChargePriceModifier)
-        labels.append('Opłata stała')
+        labels.append('Constant fee')
     if energy_limit_exists == True:
-        labels.append('Koszty związane z prekroczeniem limitów energii')
+        labels.append('Costs for exceeding a limit')
         values.append(buying_price_reward_or_penalty_after_limit-selling_price_reward_or_penalty_after_limit)
     # Create a bar chart
     bars = plt.bar(labels, values, color=colors)
@@ -1377,7 +1384,7 @@ def show_weather_forecast():
         "longitude": lon,
         "daily": ["weather_code", "temperature_2m_max", "temperature_2m_min"],
         "timezone": "auto",
-	    "forecast_days": 6
+	    "forecast_days": 7
     }
     responses = openmeteo.weather_api(url, params=params)
 
@@ -1779,7 +1786,7 @@ icon = tk.PhotoImage(file="sunny.png")
 root.iconphoto(False, icon)
 
 root.resizable(False, False)
- 
+
 # File menu
 file_menu = tk.Menu(menubar, tearoff=0)
 file_menu.add_command(label="Open PGE report ", command=open_file)
