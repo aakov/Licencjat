@@ -154,10 +154,20 @@ available_dates = []
 def unlock_dates():
     min_date = min(available_dates)
     max_date = max(available_dates)
-    min_date = datetime.strptime(min_date, "%m/%d/%y").date()
-    max_date = datetime.strptime(max_date, "%m/%d/%y").date()
-    start_date_entry_cal.config(mindate=min_date, maxdate=max_date)
-    end_date_entry_cal.config(mindate=min_date, maxdate=max_date)
+    try:
+        min_date = datetime.strptime(min_date, "%m/%d/%y").date()
+        max_date = datetime.strptime(max_date, "%m/%d/%y").date()
+        start_date_entry_cal.config(mindate=min_date, maxdate=max_date)
+        end_date_entry_cal.config(mindate=min_date, maxdate=max_date)
+    except ValueError:
+        try:
+            min_date = datetime.strptime(min_date, "%d.%m.%Y").date()
+            max_date = datetime.strptime(max_date, "%d.%m.%Y").date()
+            start_date_entry_cal.config(mindate=min_date, maxdate=max_date)
+            end_date_entry_cal.config(mindate=min_date, maxdate=max_date)
+        except ValueError:
+            messagebox.showerror("Error", "Wrong date format")
+
     start_date_entry_cal.configure(state='normal')
     end_date_entry_cal.configure(state='normal')
     # for date_str in available_dates:
@@ -249,7 +259,7 @@ def open_file_custom_daily_report():
     # date_format_entry = tk.Entry(subwindow)
     # date_format_entry.insert(0, '%m.%d/%y')
     # date_format_entry.pack()
-    report_types = ['Given', 'Taken', 'Balanced', 'Produced', 'Consumed']
+    report_types = ['Exported', 'Drawn', 'Net Energy', 'Produced', 'Consumed']
     report_type_entry_label = tk.Label(subwindow, text='Select report type :')
     report_type_entry_label.pack()
     selected_report_type = tk.StringVar(subwindow)
@@ -300,11 +310,11 @@ def open_file_custom_daily_report():
                     # print(formated_to_calendar_format_date)
                     customDay = CustomDaily(formated_to_calendar_format_date, custom_daily_power_amount)
                     available_dates.append(formated_to_calendar_format_date)
-                    if selected_report_type.get() == 'Given':
+                    if selected_report_type.get() == 'Exported':
                         customGivenEnergy.append(customDay)
-                    elif selected_report_type.get() == 'Taken':
+                    elif selected_report_type.get() == 'Drawn':
                         customTakenEnergy.append(customDay)
-                    elif selected_report_type.get() == 'Balanced':
+                    elif selected_report_type.get() == 'Net Energy':
                         customBalanced.append(customDay)
                     elif selected_report_type.get() == 'Produced':
                         customProducedEnergy.append(customDay)
@@ -337,12 +347,12 @@ def open_file_custom_daily_report():
         dateList = []
         analyzed_list = []
 
-        if selected_report_type.get() == 'Given':
+        if selected_report_type.get() == 'Exported':
             analyzed_list = customGivenEnergy
             print("Given")
-        elif selected_report_type.get() == 'Taken':
+        elif selected_report_type.get() == 'Drawn':
             analyzed_list = customTakenEnergy
-        elif selected_report_type.get() == 'Balanced':
+        elif selected_report_type.get() == 'Net Energy':
             analyzed_list = customBalanced
         elif selected_report_type.get() == 'Produced':
             analyzed_list = customProducedEnergy
@@ -429,8 +439,15 @@ def analyze_day():
         # print(balanced[0].DataOdczytu)
         # print(balanced[0].HourUsageList)
         date = cal.get_date()
-        startDate = datetime.strptime(date, "%m/%d/%y")
-        startDate = startDate.strftime("%Y%m%d")
+        try:
+            startDate = datetime.strptime(date, "%m/%d/%y")
+            startDate = startDate.strftime("%Y%m%d")
+        except ValueError:
+            try:
+                startDate = datetime.strptime(date, "%d.%m.%Y")
+                startDate = startDate.strftime("%Y%m%d")
+            except ValueError:
+                messagebox.showerror("Error", "Wrong date format")
         # print(startDate)
         picked_day_balanced = day
         picked_day_generated = day
@@ -454,9 +471,9 @@ def analyze_day():
         # print(picked_day_balanced.HourUsageList)
         formatted_date = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
         plt.figure()
-        plt.plot(labels, picked_day_balanced.HourUsageList, label='Balanced')
+        plt.plot(labels, picked_day_balanced.HourUsageList, label='Net Energy')
         plt.plot(labels, picked_day_generated.HourUsageList, label='Generated')
-        plt.plot(labels, picked_day_spent.HourUsageList, label='Spent')
+        plt.plot(labels, picked_day_spent.HourUsageList, label='Drawn')
         plt.xlabel('Hour')
         plt.ylabel('KWH')
         plt.legend()
@@ -467,7 +484,13 @@ def analyze_day():
         plt.show()
 
     def show_fronius_hourly():
-        date = datetime.strptime(cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+        try:
+            date = datetime.strptime(cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+        except ValueError:
+            try:
+                date = datetime.strptime(cal.get_date(), "%d.%m.%Y").strftime("%d.%m.%Y")
+            except ValueError:
+                messagebox.showerror("Error", "Wrong date format")
         print(date)
         # end_date = datetime.strptime(end_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
         day = find_by_date(froniusMinute_prodcution_list, date)
@@ -498,7 +521,13 @@ def analyze_day():
     subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
 
 def show_weather_hourly_1day(date):
-    date = datetime.strptime(date, "%m/%d/%y").strftime("%Y-%m-%d")
+    try:
+        date = datetime.strptime(date, "%m/%d/%y").strftime("%Y-%m-%d")
+    except ValueError:
+        try:
+            date = datetime.strptime(date, "%d.%m.%Y").strftime("%Y-%m-%d")
+        except ValueError:
+            messagebox.showerror("Error", "Wrong date format")
     cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
@@ -614,8 +643,9 @@ def parse_Fronius(csv_reader,line_count):
             #The date is in [dd.MM.yyyy]
             fronius_day = FroniusDaily(row[0], decimal_daily_energy_generation_fronius)
             froniusDaily_production_list.append(fronius_day)
-            formated_to_calendar_format_date = datetime.strptime(row[0], "%d.%m.%Y").strftime("%m/%d/%y")
+            # formated_to_calendar_format_date = datetime.strptime(row[0], "%d.%m.%Y").strftime("%m/%d/%y")
             # formated_to_calendar_format_date = row[0].strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%m/%d/%y")
+            formated_to_calendar_format_date = row[0]
             available_dates.append(formated_to_calendar_format_date)
 
 def parse_Fronius_5(csv_reader, line_count):
@@ -645,14 +675,23 @@ def parse_Fronius_5(csv_reader, line_count):
             daily_data[date]['hourly_energy'][hour_index] += energy
     for date, data in daily_data.items():
         formated_date = date.strftime("%d.%m.%Y")
-        formated_to_calendar_format_date = date.strftime("%m/%d/%y")
+        # formated_to_calendar_format_date = date.strftime("%m/%d/%y")
+        formated_to_calendar_format_date = formated_date
         available_dates.append(formated_to_calendar_format_date)
         instance = FroniusMinute(formated_date, data['total_energy'], data['hourly_energy'])
         froniusMinute_prodcution_list.append(instance)
 
 def show_sum():
-    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
-    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    print(start_date_entry_cal.get_date())
+    try:
+        startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+        endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    except ValueError:
+        try:
+            startDate = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+            endDate = datetime.strptime(end_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+        except ValueError:
+            messagebox.showerror("Error", "Wrong date format")
 
     startDateReached = False
     balancedSum = 0
@@ -691,7 +730,7 @@ def show_sum():
     print(spentSum)
 
     values = [balancedSum, generatedSum, spentSum]
-    labels = ['Energy balanced ', 'Energy Given', 'Energy Taken']
+    labels = ['Net Energy ', 'Energy Exported', 'Energy Drawn']
     colors = ['blue', 'green', 'red']
     # Create a bar chart
     bars = plt.bar(labels, values, color=colors)
@@ -733,8 +772,15 @@ def show_energy_price():
     pricePerKwHSpent = 0
     pricePerKwHGenerated = 0
 
-    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
-    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    try:
+        startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+        endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    except ValueError:
+        try:
+            startDate = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+            endDate = datetime.strptime(end_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+        except ValueError:
+            messagebox.showerror("Error", "Wrong date format")
     numberOfDays = 0
 
     # print(balanced[0].DailySum)
@@ -821,7 +867,7 @@ def show_energy_price():
                 priceBought = buying_price_reward_or_penalty_after_limit + priceBought
             priceFinal = priceBought - priceSold
     values = [priceFinal, priceSold, priceBought]
-    labels = ['Final cost', 'Cost of energy given ', 'Cost of energy taken']
+    labels = ['Final cost', 'Cost of energy exported ', 'Cost of energy drawn']
     colors = ['blue', 'green', 'red']
     if fixedChargeExists == True:
         values.append(fixedChargePriceModifier)
@@ -955,8 +1001,15 @@ def configure_price_settings():
     # display_price_settings_button.pack()
 
 def show_stacks_balanced():
-    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
-    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    try:
+        startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+        endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    except ValueError:
+        try:
+            startDate = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+            endDate = datetime.strptime(end_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+        except ValueError:
+            messagebox.showerror("Error", "Wrong date format")
 
     balanced_dailySumList = []
     balanced_dateList = []
@@ -995,8 +1048,15 @@ def show_stacks_balanced():
     plt.show()
 
 def show_stacks_generated():
-    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
-    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    try:
+        startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+        endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    except ValueError:
+        try:
+            startDate = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+            endDate = datetime.strptime(end_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+        except ValueError:
+            messagebox.showerror("Error", "Wrong date format")
 
     generated_dailySumList = []
     balanced_dateList = []
@@ -1033,8 +1093,15 @@ def show_stacks_generated():
     plt.show()
 
 def show_stacks_spent():
-    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
-    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    try:
+        startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+        endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    except ValueError:
+        try:
+            startDate = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+            endDate = datetime.strptime(end_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+        except ValueError:
+            messagebox.showerror("Error", "Wrong date format")
 
     spent_dailySumList = []
     spent_dateList = []
@@ -1070,8 +1137,15 @@ def show_stacks_spent():
     plt.show()
 
 def show_line_graph():
-    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
-    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    try:
+        startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+        endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    except ValueError:
+        try:
+            startDate = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+            endDate = datetime.strptime(end_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+        except ValueError:
+            messagebox.showerror("Error", "Wrong date format")
 
     balanced_dailySumList = []
     generated_dailySumList = []
@@ -1112,7 +1186,7 @@ def show_line_graph():
     generated_dateList = [datetime.strptime(date, '%Y%m%d') for date in generated_dateList]
     spent_dateList = [datetime.strptime(date, '%Y%m%d') for date in spent_dateList]
     plt.figure()
-    plt.plot(balanced_dateList, balanced_dailySumList, label='Balanced ')
+    plt.plot(balanced_dateList, balanced_dailySumList, label='Net Energy ')
     plt.plot(generated_dateList, generated_dailySumList, label='Sold')
     plt.plot(spent_dateList, spent_dailySumList, label='Bought')
 
@@ -1129,8 +1203,16 @@ def show_line_graph():
 
 def show_weather_history():
     lat, lon = get_coord()
-    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y-%m-%d")
-    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y-%m-%d")
+    try:
+        start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y-%m-%d")
+        end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y-%m-%d")
+    except ValueError:
+        try:
+            start_date = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y-%m-%d")
+            end_date = datetime.strptime(end_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y-%m-%d")
+        except ValueError:
+            messagebox.showerror("Error", "Wrong date format")
+
     print(start_date)
     # Kod wzięty z dokimentacji Historical Weather API
     cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
@@ -1506,7 +1588,13 @@ def download_file(url, destination):
 
 
 def show_hourly_usage_linechart():
-    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    try:
+        startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    except ValueError:
+        try:
+            startDate = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+        except ValueError:
+            messagebox.showerror("Error", "Wrong date format")
     # endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")    print(startDate)
     picked_day_balanced = day
     picked_day_generated = day
@@ -1529,7 +1617,7 @@ def show_hourly_usage_linechart():
     # print(picked_day_balanced.HourUsageList)
     formatted_date = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
     plt.figure()
-    plt.plot(labels, picked_day_balanced.HourUsageList, label='Balanced')
+    plt.plot(labels, picked_day_balanced.HourUsageList, label='Net Energy')
     plt.plot(labels, picked_day_generated.HourUsageList, label='Generated')
     plt.plot(labels, picked_day_spent.HourUsageList, label='Spent')
     plt.xlabel('Hour')
@@ -1540,8 +1628,15 @@ def show_hourly_usage_linechart():
     plt.show()
 
 def show_fronius_sum():
-    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    try:
+        start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+        end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    except ValueError:
+        try:
+            start_date = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%d.%m.%Y")
+            end_date = datetime.strptime(end_date_entry_cal.get_date(), "%d.%d.%Y").strftime("%d.%m.%Y")
+        except ValueError:
+            raise ValueError("Invalid date format")
 
     # print(start_date)
     # print(end_date)
@@ -1564,8 +1659,15 @@ def show_fronius_sum():
     subwindow.protocol("WM_DELETE_WINDOW", subwindow.destroy)
 
 def show_stacks_Fronius_daily():
-    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    try:
+        start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+        end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    except ValueError:
+        try:
+            start_date = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%d.%m.%Y")
+            end_date = datetime.strptime(end_date_entry_cal.get_date(), "%d.%d.%Y").strftime("%d.%m.%Y")
+        except ValueError:
+            raise ValueError("Invalid date format")
 
     dailyProduction_list = []
     dateList = []
@@ -1599,8 +1701,15 @@ def show_stacks_Fronius_daily():
     plt.show()
 
 def show_linechart_Fronius_daily():
-    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    try:
+        start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+        end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    except ValueError:
+        try:
+            start_date = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%d.%m.%Y")
+            end_date = datetime.strptime(end_date_entry_cal.get_date(), "%d.%d.%Y").strftime("%d.%m.%Y")
+        except ValueError:
+            raise ValueError("Invalid date format")
 
     dailyProduction_list = []
     dateList = []
@@ -1627,10 +1736,24 @@ def show_linechart_Fronius_daily():
     plt.show()
 
 def show_differnce_betweenFronius_and_PGE_daily():
-    startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
-    endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
-    start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
-    end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    try:
+        startDate = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+        endDate = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%Y%m%d")
+    except ValueError:
+        try:
+            startDate = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+            endDate = datetime.strptime(end_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
+        except ValueError:
+            messagebox.showerror("Error", "Wrong date format")
+    try:
+        start_date = datetime.strptime(start_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+        end_date = datetime.strptime(end_date_entry_cal.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+    except ValueError:
+        try:
+            start_date = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%d.%m.%Y")
+            end_date = datetime.strptime(end_date_entry_cal.get_date(), "%d.%d.%Y").strftime("%d.%m.%Y")
+        except ValueError:
+            raise ValueError("Invalid date format")
 
     startDateReached = False
     generatedSum = 0
@@ -1782,7 +1905,7 @@ root.title("Energy consumption and generation report visualizer")
 # Menu
 menubar = tk.Menu(root)
 
-icon = tk.PhotoImage(file="sunny.png")
+icon = tk.PhotoImage(file="sunny_icon.png")
 root.iconphoto(False, icon)
 
 root.resizable(False, False)
@@ -1861,15 +1984,15 @@ show_line_graph_button = customtkinter.CTkButton(root, text='Show PGE report lin
 show_line_graph_button.place(x=640, y=40)
 show_line_graph_button.configure(state=tk.DISABLED)
 
-show_stacks_button_balanced = customtkinter.CTkButton(root, text='Show stacks balanced', command=show_stacks_balanced, width=210, height=25)
+show_stacks_button_balanced = customtkinter.CTkButton(root, text='Show stacks net energy', command=show_stacks_balanced, width=210, height=25)
 show_stacks_button_balanced.place(x=640, y=70)
 show_stacks_button_balanced.configure(state=tk.DISABLED)
 
-show_stacks_button_generated = customtkinter.CTkButton(root, text='Show energy given to network', command=show_stacks_generated, width=210, height=25)
+show_stacks_button_generated = customtkinter.CTkButton(root, text='Show energy exported to the grid', command=show_stacks_generated, width=210, height=25)
 show_stacks_button_generated.place(x=640, y=100)
 show_stacks_button_generated.configure(state=tk.DISABLED)
 
-show_stacks_button_spent = customtkinter.CTkButton(root, text='Show energy taken from network', command=show_stacks_spent, width=210, height=25)
+show_stacks_button_spent = customtkinter.CTkButton(root, text='Show energy drawn from the grid', command=show_stacks_spent, width=210, height=25)
 show_stacks_button_spent.place(x=640, y=130)
 show_stacks_button_spent.configure(state=tk.DISABLED)
 
@@ -1948,20 +2071,8 @@ solar_energy_prediction_forecast_button = customtkinter.CTkButton(root, text='So
                                                       text_color="black")
 solar_energy_prediction_forecast_button.place(x=890, y=160)
 
-# get_coord_button = ttk.Button(root, text='Get coord', command=get_coord, width=button_size1)
-# get_coord_button.place(x=640, y=700)
-
-# L1 = Label(root, text="Enter Date")
-# L1.pack()
-# dateEntry = Entry(root)
-# dateEntry.pack()
-
 numColKierunek = 2
 numColDataOdczytu = 1
-# print('Numer kolumny daty ')
-# print(numColDataOdczytu)
-# print('Numer kolumny kierunku ')
-# print(numColKierunek)
-# print('Delimiter ;')
+
 
 root.mainloop()
