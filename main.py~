@@ -1632,7 +1632,7 @@ def show_fronius_sum():
     except ValueError:
         try:
             start_date = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%d.%m.%Y")
-            end_date = datetime.strptime(end_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%d.%m.%Y")
+            end_date = datetime.strptime(end_date_entry_cal.get_date(), "%d.%d.%Y").strftime("%d.%m.%Y")
         except ValueError:
             messagebox.showerror("Invalid date format")
 
@@ -1663,7 +1663,7 @@ def show_stacks_Fronius_daily():
     except ValueError:
         try:
             start_date = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%d.%m.%Y")
-            end_date = datetime.strptime(end_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%d.%m.%Y")
+            end_date = datetime.strptime(end_date_entry_cal.get_date(), "%d.%d.%Y").strftime("%d.%m.%Y")
         except ValueError:
             messagebox.showerror("Invalid date format")
 
@@ -1705,7 +1705,7 @@ def show_linechart_Fronius_daily():
     except ValueError:
         try:
             start_date = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%d.%m.%Y")
-            end_date = datetime.strptime(end_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%d.%m.%Y")
+            end_date = datetime.strptime(end_date_entry_cal.get_date(), "%d.%d.%Y").strftime("%d.%m.%Y")
         except ValueError:
             messagebox.showerror("Invalid date format")
 
