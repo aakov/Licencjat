@@ -1060,7 +1060,7 @@ def show_stacks_generated():
     balanced_dateList = []
     generated_dateList = []
     startDateReached = False
-    for i in balanced:
+    for i in energySold:
         if i.DataOdczytu == startDate:
             startDateReached = True
         if startDateReached == True:
@@ -1202,6 +1202,8 @@ def show_line_graph():
 
 def show_weather_history():
     lat, lon = get_coord()
+    if lat is None or lon is None:
+        return
     try:
         start_date = start_date_entry_cal.selection_get().strftime("%Y-%m-%d")
         end_date = end_date_entry_cal.selection_get().strftime("%Y-%m-%d")
@@ -1304,6 +1306,9 @@ def interpret_weather_code(code):
 
 def show_current_weather():
     lat, lon = get_coord_user()
+    if lon is None:
+        messagebox.showerror("Error", "Can't download weather data due to lack of internet connection")
+        return
     cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
@@ -1452,6 +1457,8 @@ def show_current_weather():
 
 def show_weather_forecast():
     lat, lon = get_coord()
+    if lat is None or lon is None:
+        return
     # Kod przeważnie z dokumentacji
     cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
@@ -1507,7 +1514,8 @@ def show_weather_forecast():
 
 def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
     lat, lon = get_coord()
-
+    if lat is None or lon is None:
+        return
     # Kod przeważnie z dokumentacji
     cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
@@ -1838,22 +1846,39 @@ def get_coord():
         if location:
             return location.latitude, location.longitude
         else:
+            raise Exception("Location not found. Input a correct location")
             return None
     except GeocoderTimedOut:
-        print("The geocoding service timed out. Please try again.")
+        messagebox.showerror("Error", "The geocoding service timed out. Please try again.")
         return None
     except GeocoderServiceError as e:
-        print(f"Geocoding service error: {e}")
+        messagebox.showerror("Error", f"Geocoding service error: {e}")
         return None
+    except Exception as e:
+        messagebox.showerror("Error", e)
+        return None, None
 
 def get_coord_user():
     # Wiem że już mam inną biblioteke ale z poprzednia dziwnie to działa więc jest to
-    g = geocoder.ip('me')
-    lat, lon = g.latlng
-    return lat, lon
+    try:
+        g = geocoder.ip('me')
+        if g.latlng is None:
+            raise ConnectionError("In order for the application to work properly it has to be connected to the internet"
+                                  ". Please fix your internet connection and restart the app.")
+        lat, lon = g.latlng
+        return lat, lon
+    except Exception as e:
+        messagebox.showerror("Error", e)
+        return None, None
+
 def solar_energy_prediction_forecast():
     lat, lon = get_coord()
+    if lat is None or lon is None:
+        return
     plant_power = plant_power_entry.get()
+    if not plant_power.isdigit():
+        messagebox.showerror("Error", "Input a number")
+        return
     url = "https://api.forecast.solar/estimate/watthours/day/"+ str(lat) + "/"+ str(lon) +"/0/0/"+plant_power
     response = requests.get(url)
     #Pokazuje przewidywaną generację energii
