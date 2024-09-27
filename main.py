@@ -6,7 +6,7 @@ from tkinter import filedialog, ttk, messagebox
 import openmeteo_requests
 import requests
 import getpass
-from datetime import datetime
+from datetime import datetime, timedelta
 from PIL import Image, ImageTk
 import PIL
 import requests_cache
@@ -1094,7 +1094,6 @@ def show_stacks_spent():
     try:
         startDate = start_date_entry_cal.selection_get().strftime("%Y%m%d")
         endDate = end_date_entry_cal.selection_get().strftime("%Y%m%d")
-
     except ValueError:
         try:
             startDate = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
@@ -1139,7 +1138,6 @@ def show_line_graph():
     try:
         startDate = start_date_entry_cal.selection_get().strftime("%Y%m%d")
         endDate = end_date_entry_cal.selection_get().strftime("%Y%m%d")
-
     except ValueError:
         try:
             startDate = datetime.strptime(start_date_entry_cal.get_date(), "%d.%m.%Y").strftime("%Y%m%d")
@@ -1173,6 +1171,7 @@ def show_line_graph():
             spent_dateList.append(i.DataOdczytu)
         if i.DataOdczytu == endDate:
             break
+    startDateReached = False
     for i in balanced:
         if i.DataOdczytu == startDate:
             startDateReached = True
@@ -1237,25 +1236,31 @@ def show_weather_history():
     print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
     daily = response.Daily()
-    daily_weather_code = daily.Variables(0).ValuesAsNumpy()
-    daily_temperature_2m_max = daily.Variables(1).ValuesAsNumpy()
-    daily_temperature_2m_min = daily.Variables(2).ValuesAsNumpy()
-    daily_sunshine_duration = daily.Variables(3).ValuesAsNumpy()
+    daily_weather_code = np.array(daily.Variables(0).ValuesAsNumpy())
+    daily_temperature_2m_max = np.array(daily.Variables(1).ValuesAsNumpy())
+    daily_temperature_2m_min = np.array(daily.Variables(2).ValuesAsNumpy())
+    # daily_sunshine_duration = np.array(daily.Variables(3).ValuesAsNumpy())
 
-    daily_data = {"Date": pd.date_range(
-        start=pd.to_datetime(daily.Time(), unit="s").normalize(),
-        end=pd.to_datetime(daily.TimeEnd(), unit="s").normalize(),
-        freq=pd.Timedelta(seconds=daily.Interval()),
-        inclusive="left"
-    )}
+    start_time = datetime.utcfromtimestamp(daily.Time())
+    end_time = datetime.utcfromtimestamp(daily.TimeEnd())
+
+
+    num_days = (end_time - start_time).days
+
+
+    date_array = np.array([start_time + timedelta(days=i) for i in range(num_days)])
+
+    daily_data = {
+        "Date": date_array
+    }
     description = [interpret_weather_code(str(int(code))) for code in daily_weather_code]
     daily_data["Weather"] = description
     daily_data["Max"] = [round(num) for num in daily_temperature_2m_max]
     daily_data["Min"] = [round(num) for num in daily_temperature_2m_min]
     # daily_data["sunshine_duration"] = daily_sunshine_duration
 
-    daily_dataframe = pd.DataFrame(data=daily_data)
-    plot_weather_data(daily_dataframe)
+    # daily_dataframe = pd.DataFrame(data=daily_data)
+    plot_weather_data(daily_data)
     # subwindow = tk.Toplevel(root)
     # tk.Label(subwindow, text=str(daily_dataframe.to_string(index=False))).pack()
     # print(daily_dataframe)
@@ -1318,11 +1323,8 @@ def show_current_weather():
     current = response.Current()
     current_temperature_2m = current.Variables(0).Value()
     current_is_day = current.Variables(1).Value()
-    current_rain = current.Variables(2).Value()
-    current_showers = current.Variables(3).Value()
-    current_snowfall = current.Variables(4).Value()
     current_weather_code = current.Variables(5).Value()
-    current_cloud_cover = current.Variables(6).Value()
+
 
     description = interpret_weather_code(str(int(current_weather_code)))
     sunny_image = Image.open("sunny.png")
@@ -1475,23 +1477,31 @@ def show_weather_forecast():
     # print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
     daily = response.Daily()
-    daily_weather_code = daily.Variables(0).ValuesAsNumpy()
-    daily_temperature_2m_max = daily.Variables(1).ValuesAsNumpy()
-    daily_temperature_2m_min = daily.Variables(2).ValuesAsNumpy()
+    daily_weather_code = np.array(daily.Variables(0).ValuesAsNumpy())
+    daily_temperature_2m_max = np.array(daily.Variables(1).ValuesAsNumpy())
+    daily_temperature_2m_min = np.array(daily.Variables(2).ValuesAsNumpy())
 
-    daily_data = {"Date": pd.date_range(
-        start=pd.to_datetime(daily.Time(), unit="s").normalize(),
-        end=pd.to_datetime(daily.TimeEnd(), unit="s").normalize(),
-        freq=pd.Timedelta(seconds=daily.Interval()),
-        inclusive="left"
-    )}
+    start_time = datetime.utcfromtimestamp(daily.Time())
+    end_time = datetime.utcfromtimestamp(daily.TimeEnd())
+
+    num_days = (end_time - start_time).days
+    date_array = np.array([start_time + timedelta(days=i) for i in range(num_days)])
+
+    daily_data = {
+        "Date": date_array
+    }
+
     description = [interpret_weather_code(str(int(code))) for code in daily_weather_code]
     daily_data["Weather"] = description
     daily_data["Max"] = [round(num) for num in daily_temperature_2m_max]
     daily_data["Min"] = [round(num) for num in daily_temperature_2m_min]
-    # print(str(daily_temperature_2m_min[1]) + " " + str(daily_temperature_2m_max[1]))
-    daily_dataframe = pd.DataFrame(data=daily_data)
-    plot_weather_data(daily_dataframe)
+
+    # daily_dataframe = pd.DataFrame(data=daily_data)
+    # daily_dataframe["Max"] = np.array(daily_dataframe["Max"]).flatten()
+    # daily_dataframe["Min"] = np.array(daily_dataframe["Min"]).flatten()
+    # daily_dataframe["Date"] = np.array(daily_dataframe["Date"]).flatten()
+    plot_weather_data(daily_data)
+
     # subwindow = tk.Toplevel(root)
     # tk.Label(subwindow, text=str(daily_dataframe.to_string(index=False))).pack()
 
@@ -1528,10 +1538,10 @@ def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
         freq=pd.Timedelta(seconds=daily.Interval()),
         inclusive="left"
     )}
+
     daily_data["weather_code"] = daily_weather_code
     daily_data["temperature_2m_max"] = daily_temperature_2m_max
     daily_data["temperature_2m_min"] = daily_temperature_2m_min
-    daily_dataframe = pd.DataFrame(data=daily_data)
     day1TempMin = math.ceil(daily_temperature_2m_min[1])
     day1TempMax = math.ceil(daily_temperature_2m_max[1])
     day2TempMin = math.ceil(daily_temperature_2m_min[2])
@@ -1541,12 +1551,30 @@ def show_weather_forecast_for_energy_prediction_days(subwindow, date1, date2):
     label = ttk.Label(subwindow, text=t).pack()
 
 
-def plot_weather_data(dataframe):
+def plot_weather_data(daily_data):
     # Tu spróbowałem nowej bibloiteki
+
+    try:
+        date_array = np.array(daily_data["Date"])
+        print(date_array)
+        max_temp_array = np.array(daily_data["Max"]).flatten()
+        print(max_temp_array)
+        min_temp_array = np.array(daily_data["Min"]).flatten()
+        print(min_temp_array)
+    except ValueError as e:
+        messagebox.showerror("Error", f"Zła konwertacja {e}")
+
     fig, ax = plt.subplots(figsize=(10, 5))
 
-    sns.lineplot(x="Date", y="Max", data=dataframe, label="Max Temp", ax=ax, color="red", marker="o")
-    sns.lineplot(x="Date", y="Min", data=dataframe, label="Min Temp", ax=ax, color="blue", marker="o")
+    try:
+        sns.lineplot(x=date_array, y=max_temp_array, label="Max Temp", ax=ax, color="red", marker="o")
+        sns.lineplot(x=date_array, y=min_temp_array, label="Min Temp", ax=ax, color="blue", marker="o")
+    except ValueError:
+        try:
+            ax.plot(date_array, max_temp_array, label="Max Temp", color="red", marker="o", linestyle="-")
+            ax.plot(date_array, min_temp_array, label="Min Temp", color="blue", marker="o", linestyle="-")
+        except ValueError as e:
+            messagebox.showerror("Error", f"ValueError: {e}")
 
     fig.canvas.manager.set_window_title('Weather')
     ax.set_title('Weather')
@@ -1556,16 +1584,16 @@ def plot_weather_data(dataframe):
 
     ax.grid(True, which='both')
 
-
     plt.xticks(rotation=45)
 
-    max_temp = dataframe["Max"].iloc[0]
-    min_temp = dataframe["Min"].iloc[0]
-    date = dataframe["Date"].iloc[0]
+    max_temp = max_temp_array[0]
+    min_temp = min_temp_array[0]
+    date = date_array[0]
     ax.annotate(f'{max_temp}°C', xy=(date, max_temp), xytext=(date, max_temp + 2),
                 arrowprops=dict(facecolor='black', shrink=0.05))
     ax.annotate(f'{min_temp}°C', xy=(date, min_temp), xytext=(date, min_temp - 2),
                 arrowprops=dict(facecolor='black', shrink=0.05))
+
     plt.tight_layout()
     plt.show()
 
