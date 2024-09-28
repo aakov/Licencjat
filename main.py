@@ -823,6 +823,9 @@ def show_energy_price():
         if not energy_price_spent_entry.get().strip() or not energy_price_generated_entry.get().strip():
             messagebox.showerror("Error", "You have to configure price settings first")
             return
+        if not energy_price_spent_entry.get().isdigit() or energy_price_generated_entry.get().isdigit():
+            messagebox.showerror("Error", "Price has to be a digit")
+            return
         pricePerKwHSpent = Decimal(energy_price_spent_entry.get())
         pricePerKwHGenerated = Decimal(energy_price_generated_entry.get())
 
@@ -1322,8 +1325,12 @@ def show_current_weather():
         "current": ["temperature_2m", "is_day", "rain", "showers", "snowfall", "weather_code", "cloud_cover"],
         "timezone": "auto"
     }
-    responses = openmeteo.weather_api(url, params=params)
-    response = responses[0]
+    try:
+        responses = openmeteo.weather_api(url, params=params)
+        response = responses[0]
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to get weather data: {e}")
+        return
 
     current = response.Current()
     current_temperature_2m = current.Variables(0).Value()
