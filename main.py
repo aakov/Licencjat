@@ -433,7 +433,7 @@ def analyze_day():
     labelRemaining.pack()
     cal = Calendar(subwindow, selectmode='day', year=2023, month=2, day=22)
     cal.pack()
-    date = cal.get_date()
+    # date = cal.get_date()
 
     def show_hourly_usage_linechart_day():
         # print(balanced[0].DataOdczytu)
@@ -453,34 +453,36 @@ def analyze_day():
         picked_day_spent = day
         labels = list(range(0, 24))
         # print(labels)
-
-        for i in balanced:
-            if i.DataOdczytu == startDate:
-                picked_day_balanced = i
-                break
-        for i in energySold:
-            if i.DataOdczytu == startDate:
-                picked_day_generated = i
-                break
-        for i in energyBought:
-            if i.DataOdczytu == startDate:
-                picked_day_spent = i
-                break
-        # print(picked_day_balanced.DataOdczytu)
-        # print(picked_day_balanced.HourUsageList)
-        formatted_date = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
-        plt.figure()
-        plt.plot(labels, picked_day_balanced.HourUsageList, label='Net Energy')
-        plt.plot(labels, picked_day_generated.HourUsageList, label='Generated')
-        plt.plot(labels, picked_day_spent.HourUsageList, label='Drawn')
-        plt.xlabel('Hour')
-        plt.ylabel('KWH')
-        plt.legend()
-        plt.title('Hourly usage on ' + str(formatted_date))
-        plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-        plt.gcf().autofmt_xdate()
-        plt.gcf().canvas.manager.set_window_title('PGE report analysis')
-        plt.show()
+        try:
+            for i in balanced:
+                if i.DataOdczytu == startDate:
+                    picked_day_balanced = i
+                    break
+            for i in energySold:
+                if i.DataOdczytu == startDate:
+                    picked_day_generated = i
+                    break
+            for i in energyBought:
+                if i.DataOdczytu == startDate:
+                    picked_day_spent = i
+                    break
+            # print(picked_day_balanced.DataOdczytu)
+            # print(picked_day_balanced.HourUsageList)
+            formatted_date = f"{startDate[:4]}/{startDate[4:6]}/{startDate[6:]}"
+            plt.figure()
+            plt.plot(labels, picked_day_balanced.HourUsageList, label='Net Energy')
+            plt.plot(labels, picked_day_generated.HourUsageList, label='Generated')
+            plt.plot(labels, picked_day_spent.HourUsageList, label='Drawn')
+            plt.xlabel('Hour')
+            plt.ylabel('KWH')
+            plt.legend()
+            plt.title('Hourly usage on ' + str(formatted_date))
+            plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+            plt.gcf().autofmt_xdate()
+            plt.gcf().canvas.manager.set_window_title('PGE report analysis')
+            plt.show()
+        except Exception:
+            messagebox.showerror("Error", "No data for this day")
 
     def show_fronius_hourly():
         try:
@@ -492,9 +494,10 @@ def analyze_day():
                 messagebox.showerror("Error", "Wrong date format")
         print(date)
         # end_date = datetime.strptime(end_date_entry.get(), "%Y%m%d").strftime("%d.%m.%Y")
+
         day = find_by_date(froniusMinute_prodcution_list, date)
         if day == None:
-            messagebox.showerror("Error No objects found with date ", date)
+            messagebox.showerror("Error", f"No objects found with date {date} ")
         else:
             labels = list(range(0, 24))
             plt.figure()
@@ -508,7 +511,7 @@ def analyze_day():
             plt.show()
 
     def show_weather_temp():
-        show_weather_hourly_1day(date)
+        show_weather_hourly_1day(cal.get_date())
 
 
     open_button_show_hourly_usage_linechart_day = ttk.Button(subwindow, text='Show PGE report hourly', command=show_hourly_usage_linechart_day, width = 30)
@@ -766,6 +769,13 @@ global buying_price_reward_or_penalty_after_limit, selling_price_reward_or_penal
 buying_price_reward_or_penalty_after_limit = Decimal(0)
 selling_price_reward_or_penalty_after_limit  = Decimal(0)
 
+def is_float(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
 def show_energy_price():
 
     pricePerKwHSpent = 0
@@ -823,7 +833,7 @@ def show_energy_price():
         if not energy_price_spent_entry.get().strip() or not energy_price_generated_entry.get().strip():
             messagebox.showerror("Error", "You have to configure price settings first")
             return
-        if not energy_price_spent_entry.get().isdigit() or energy_price_generated_entry.get().isdigit():
+        if is_float(energy_price_spent_entry.get()) == False or is_float(energy_price_generated_entry.get()) == False:
             messagebox.showerror("Error", "Price has to be a digit")
             return
         pricePerKwHSpent = Decimal(energy_price_spent_entry.get())
@@ -1883,7 +1893,7 @@ def solar_energy_prediction_forecast():
     if lat is None or lon is None:
         return
     plant_power = plant_power_entry.get()
-    if not plant_power.isdigit():
+    if not is_float(plant_power):
         messagebox.showerror("Error", "Input a number")
         return
     url = "https://api.forecast.solar/estimate/watthours/day/"+ str(lat) + "/"+ str(lon) +"/0/0/"+plant_power
