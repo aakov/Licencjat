@@ -1,5 +1,6 @@
 import csv
 import math
+import os
 # from calendar import Calendar
 from tkinter import *
 from tkinter import filedialog, ttk, messagebox
@@ -136,6 +137,8 @@ Fronius_5_min_file_opened = False
 sns.set_theme(style="whitegrid")
 global window_opened
 window_opened = False
+global weather_icon_cache
+weather_icon_cache = {}
 
 #To jest potrzebne bo inaczej nie da sie normalnie poierac wartosci z tablic
 
@@ -1349,128 +1352,45 @@ def show_current_weather():
 
 
     description = interpret_weather_code(str(int(current_weather_code)))
-    sunny_image = Image.open("sunny.png")
-    sunny_image = sunny_image.resize((100, 100))
-    sunny_image_tk = ImageTk.PhotoImage(sunny_image)
-    moon_image = Image.open("moon.png")
-    moon_image = moon_image.resize((100, 100))
-    moon_image_tk = ImageTk.PhotoImage(moon_image)
-    weather_description_label =tk.Label(root,text=description)
-    weather_description_label.pack()
-    if current_is_day == 0.0:
-        weather_image = moon_image_tk
-        if description == "Overcast":
-            overcast_image = Image.open("overcast.png") # <a href="https://www.flaticon.com/free-icons/cloud" title="cloud icons">Cloud icons created by kosonicon - Flaticon</a>
-            overcast_image = overcast_image.resize((100, 100))
-            overcast_image_tk = ImageTk.PhotoImage(overcast_image)
-            weather_image = overcast_image_tk
-        if description == "Mainly clear" or description == "Partly cloudy":
-            partly_cloudy_image = Image.open("night_cloud.png") #<a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
-            partly_cloudy_image = partly_cloudy_image.resize((100, 100))
-            partly_cloudy_image_tk = ImageTk.PhotoImage(partly_cloudy_image)
-            weather_image = partly_cloudy_image_tk
-        if description == "Fog" or description == "Depositing rime fog":
-            fog_image = Image.open("fog.png")
-            fog_image = fog_image.resize((100, 100))
-            fog_image_tk = ImageTk.PhotoImage(fog_image) # <a href="https://www.flaticon.com/free-icons/fog" title="fog icons">Fog icons created by Dreamstale - Flaticon</a>
-            weather_image = fog_image_tk
-        if description == "Drizzle: Light intensity" or description == "Drizzle: Moderate intensity" or description == "Drizzle: Dense intensity":
-            drizzle_image = Image.open("drizzle.png")
-            drizzle_image = drizzle_image.resize((100, 100))
-            drizzle_image_tk = ImageTk.PhotoImage(drizzle_image) # <a href="https://www.flaticon.com/free-icons/weather-forecast" title="weather forecast icons">Weather forecast icons created by kosonicon - Flaticon</a>
-            weather_image = drizzle_image_tk
-        if description == "Freezing Drizzle: Light intensity" or description == "Freezing Drizzle: Dense intensity" or description == "Freezing Rain: Light intensity" or description == "Freezing Rain: Heavy intensity":
-            freezing_drizzle_image = Image.open("rain+snow.png")
-            freezing_drizzle_image = freezing_drizzle_image.resize((100, 100))
-            freezing_drizzle_image_tk = ImageTk.PhotoImage(freezing_drizzle_image) # <a href="https://www.flaticon.com/free-icons/snowfall" title="snowfall icons">Snowfall icons created by kosonicon - Flaticon</a>
-            weather_image = freezing_drizzle_image_tk
-        if description == "Rain showers: Slight intensity" or description == "Rain showers: Moderate intensity" or description == "Rain showers: Violent intensity":
-            rain_showers_image = Image.open("rain_showers.png") # <a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
-            rain_showers_image = rain_showers_image.resize((100, 100))
-            rain_showers_image_tk = ImageTk.PhotoImage(rain_showers_image)
-            weather_image = rain_showers_image_tk
-        if description == "Snow fall: Slight intensity" or description == "Snow fall: Moderate intensity" or description == "Snow fall: Heavy intensity" or description == "Snow grains":
-            snow_image = Image.open("snowfall.png") # <a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
-            snow_image = snow_image.resize((100, 100))
-            snow_image_tk = ImageTk.PhotoImage(snow_image)
-            weather_image = snow_image_tk
-        if description == "Snow showers: Slight intensity" or description == "Snow showers: Heavy intensity":
-            snow_showers_image = Image.open("snow_showers.png") # <a href="https://www.flaticon.com/free-icons/snow" title="snow icons">Snow icons created by kosonicon - Flaticon</a>
-            snow_showers_image = snow_showers_image.resize((100, 100))
-            snow_showers_image_tk = ImageTk.PhotoImage(snow_showers_image)
-            weather_image = snow_showers_image_tk
-        if description == "Thunderstorm: Slight or moderate" or description == "Thunderstorm with slight hail":
-            thunderstorm_image = Image.open("thunderstorm.png") # <a href="https://www.flaticon.com/free-icons/dark-cloud" title="dark cloud icons">Dark cloud icons created by kosonicon - Flaticon</a>
-            thunderstorm_image = thunderstorm_image.resize((100, 100))
-            thunderstorm_image_tk = ImageTk.PhotoImage(thunderstorm_image)
-            weather_image = thunderstorm_image_tk
-        weather_label = tk.Label(root, image=weather_image)
-        weather_label.place(x=100,y=570)
-        weather_label.image = weather_image
-    else:
-        weather_image = sunny_image_tk
-        if description == "Overcast":
-            overcast_image = Image.open("overcast.png") # <a href="https://www.flaticon.com/free-icons/cloud" title="cloud icons">Cloud icons created by kosonicon - Flaticon</a>
-            overcast_image = overcast_image.resize((100, 100))
-            overcast_image_tk = ImageTk.PhotoImage(overcast_image)
-            weather_image = overcast_image_tk
-        if description == "Mainly clear" or description == "Partly cloudy":
-            mainly_clear_image = Image.open("clear-sky.png") # <a href="https://www.flaticon.com/free-icons/sky" title="sky icons">Sky icons created by kosonicon - Flaticon</a>
-            mainly_clear_image = mainly_clear_image.resize((100, 100))
-            mainly_clear_image_tk = ImageTk.PhotoImage(mainly_clear_image)
-            weather_image = mainly_clear_image_tk
-        if description == "Fog" or description == "Depositing rime fog":
-            fog_image = Image.open("fog.png")
-            fog_image = fog_image.resize((100, 100))
-            fog_image_tk = ImageTk.PhotoImage(fog_image) # <a href="https://www.flaticon.com/free-icons/fog" title="fog icons">Fog icons created by Dreamstale - Flaticon</a>
-            weather_image = fog_image_tk
-        if description == "Drizzle: Light intensity" or description == "Drizzle: Moderate intensity" or description == "Drizzle: Dense intensity":
-            drizzle_image = Image.open("drizzle.png")
-            drizzle_image = drizzle_image.resize((100, 100))
-            drizzle_image_tk = ImageTk.PhotoImage(drizzle_image) # <a href="https://www.flaticon.com/free-icons/weather-forecast" title="weather forecast icons">Weather forecast icons created by kosonicon - Flaticon</a>
-            weather_image = drizzle_image_tk
-        if description == "Freezing Drizzle: Light intensity" or description == "Freezing Drizzle: Dense intensity" or description == "Freezing Rain: Light intensity" or description == "Freezing Rain: Heavy intensity":
-            freezing_drizzle_image = Image.open("rain+snow.png")
-            freezing_drizzle_image = freezing_drizzle_image.resize((100, 100))
-            freezing_drizzle_image_tk = ImageTk.PhotoImage(freezing_drizzle_image) # <a href="https://www.flaticon.com/free-icons/snowfall" title="snowfall icons">Snowfall icons created by kosonicon - Flaticon</a>
-            weather_image = freezing_drizzle_image_tk
-        if description == "Rain: Slight intensity" or description == "Rain: Moderate intensity" or description == "Rain: Heavy intensity":
-            rain_image = Image.open("rain.png")
-            rain_image = rain_image.resize((100, 100))
-            rain_image_tk = ImageTk.PhotoImage(rain_image) # <a href="https://www.flaticon.com/free-icons/weather-forecast" title="weather forecast icons">Weather forecast icons created by kosonicon - Flaticon</a>
-            weather_image = rain_image_tk
-        if description == "Rain showers: Slight intensity" or description == "Rain showers: Moderate intensity" or description == "Rain showers: Violent intensity":
-            rain_showers_image = Image.open("rain_showers.png") # <a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
-            rain_showers_image = rain_showers_image.resize((100, 100))
-            rain_showers_image_tk = ImageTk.PhotoImage(rain_showers_image)
-            weather_image = rain_showers_image_tk
-        if description == "Snow fall: Slight intensity" or description == "Snow fall: Moderate intensity" or description == "Snow fall: Heavy intensity" or description == "Snow grains":
-            snow_image = Image.open("snowfall.png") # <a href="https://www.flaticon.com/free-icons/weather" title="weather icons">Weather icons created by kosonicon - Flaticon</a>
-            snow_image = snow_image.resize((100, 100))
-            snow_image_tk = ImageTk.PhotoImage(snow_image)
-            weather_image = snow_image_tk
-        if description == "Snow showers: Slight intensity" or description == "Snow showers: Heavy intensity":
-            snow_showers_image = Image.open("snow_showers.png") # <a href="https://www.flaticon.com/free-icons/snow" title="snow icons">Snow icons created by kosonicon - Flaticon</a>
-            snow_showers_image = snow_showers_image.resize((100, 100))
-            snow_showers_image_tk = ImageTk.PhotoImage(snow_showers_image)
-            weather_image = snow_showers_image_tk
-        if description == "Thunderstorm: Slight or moderate" or description == "Thunderstorm with slight hail":
-            thunderstorm_image = Image.open("thunderstorm.png") # <a href="https://www.flaticon.com/free-icons/dark-cloud" title="dark cloud icons">Dark cloud icons created by kosonicon - Flaticon</a>
-            thunderstorm_image = thunderstorm_image.resize((100, 100))
-            thunderstorm_image_tk = ImageTk.PhotoImage(thunderstorm_image)
-            weather_image = thunderstorm_image_tk
-        weather_label = tk.Label(root, image=weather_image)
-        weather_label.place(x=100,y=570)
-        weather_label.image = weather_image
+    weather_description_label.configure(text=description)
 
+    script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    image_center = 150
-    root.update()
-    # Z jakiegoś powodu nie dało się bez tego dostaś szerokośći labelu
-    print(weather_description_label.winfo_width())
-    weather_description_label.place(x = image_center - (weather_description_label.winfo_width()/2),y=550)
-    temp_label = tk.Label(root, text=str(round(current_temperature_2m))+'°C')
-    temp_label.place(x=137,y=670)
+    def get_icon(icon_filename):
+        if icon_filename not in weather_icon_cache:
+            icon_path = os.path.join(script_dir, icon_filename)
+            icon_image = Image.open(icon_path).resize((100, 100))
+            weather_icon_cache[icon_filename] = ImageTk.PhotoImage(icon_image)
+        return weather_icon_cache[icon_filename]
+
+    is_night = current_is_day == 0.0
+    icon_filename = "moon.png" if is_night else "sunny.png"
+
+    if description == "Overcast":
+        icon_filename = "overcast.png"
+    elif description in ("Mainly clear", "Partly cloudy"):
+        icon_filename = "night_cloud.png" if is_night else "clear-sky.png"
+    elif description in ("Fog", "Depositing rime fog"):
+        icon_filename = "fog.png"
+    elif description in ("Drizzle: Light intensity", "Drizzle: Moderate intensity", "Drizzle: Dense intensity"):
+        icon_filename = "drizzle.png"
+    elif description in ("Freezing Drizzle: Light intensity", "Freezing Drizzle: Dense intensity", "Freezing Rain: Light intensity", "Freezing Rain: Heavy intensity"):
+        icon_filename = "rain+snow.png"
+    elif description in ("Rain showers: Slight intensity", "Rain showers: Moderate intensity", "Rain showers: Violent intensity"):
+        icon_filename = "rain_showers.png"
+    elif description in ("Snow fall: Slight intensity", "Snow fall: Moderate intensity", "Snow fall: Heavy intensity", "Snow grains"):
+        icon_filename = "snowfall.png"
+    elif description in ("Snow showers: Slight intensity", "Snow showers: Heavy intensity"):
+        icon_filename = "snow_showers.png"
+    elif description in ("Thunderstorm: Slight or moderate", "Thunderstorm with slight hail"):
+        icon_filename = "thunderstorm.png"
+    elif description in ("Rain: Slight intensity", "Rain: Moderate intensity", "Rain: Heavy intensity") and not is_night:
+        icon_filename = "rain.png"
+
+    weather_image = get_icon(icon_filename)
+    weather_label.configure(image=weather_image)
+    weather_label.image = weather_image
+    temp_label.configure(text=str(round(current_temperature_2m)) + '°C')
 
 def show_weather_forecast():
     lat, lon = get_coord()
@@ -1968,16 +1888,18 @@ def enable_PGE_and_Fronius_related_buttons():
 
 
 root = tk.Tk()
-root.geometry("1200x800")
 root.title("Energy consumption and generation report visualizer")
-# Menu
-menubar = tk.Menu(root)
 
+screen_w = root.winfo_screenwidth()
+screen_h = root.winfo_screenheight()
 icon = tk.PhotoImage(file="sunny_icon.png")
 root.iconphoto(False, icon)
+root.geometry(f"{int(screen_w * 0.85)}x{int(screen_h * 0.85)}")
+root.minsize(980, 700)
+root.resizable(True, True)
 
-root.resizable(False, False)
-
+# Menu
+menubar = tk.Menu(root)
 # File menu
 file_menu = tk.Menu(menubar, tearoff=0)
 file_menu.add_command(label="Open PGE report ", command=open_file)
@@ -2000,18 +1922,43 @@ menubar.add_cascade(label="Edit", menu=edit_menu)
 
 root.config(menu=menubar)
 
+main_container = ttk.Frame(root, padding=12)
+main_container.grid(row=0, column=0, sticky="nsew")
+root.grid_rowconfigure(0, weight=1)
+root.grid_columnconfigure(0, weight=1)
+
+for panel_column in range(3):
+    main_container.grid_columnconfigure(panel_column, weight=1, uniform="main_columns")
+main_container.grid_rowconfigure(0, weight=1)
+
+left_panel = ttk.Frame(main_container)
+left_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+left_panel.grid_columnconfigure(0, weight=1)
+
+middle_panel = ttk.Frame(main_container)
+middle_panel.grid(row=0, column=1, sticky="nsew", padx=8)
+middle_panel.grid_columnconfigure(0, weight=1)
+
+right_panel = ttk.Frame(main_container)
+right_panel.grid(row=0, column=2, sticky="nsew", padx=(8, 0))
+right_panel.grid_columnconfigure(0, weight=1)
+
 # Calendars
-enter_start_date_label = tk.Label(root, text='Enter start date:')
-enter_start_date_label.place(x=100, y=10)
+date_frame = ttk.LabelFrame(left_panel, text='Date range', padding=8)
+date_frame.grid(row=0, column=0, sticky="nsew", pady=(0, 10))
+date_frame.grid_columnconfigure(0, weight=1)
 
-start_date_entry_cal = Calendar(root, selectmode='day', year=2023, month=1, day=1)
-start_date_entry_cal.place(x=30, y=40)
+enter_start_date_label = tk.Label(date_frame, text='Enter start date:')
+enter_start_date_label.grid(row=0, column=0, sticky="w", pady=(0, 4))
 
-enter_end_date_label = tk.Label(root, text='Enter end date:')
-enter_end_date_label.place(x=100, y=270)
+start_date_entry_cal = Calendar(date_frame, selectmode='day', year=2023, month=1, day=1)
+start_date_entry_cal.grid(row=1, column=0, sticky="ew", pady=(0, 8))
 
-end_date_entry_cal = Calendar(root, selectmode='day', year=2023, month=1, day=9)
-end_date_entry_cal.place(x=30, y=300)
+enter_end_date_label = tk.Label(date_frame, text='Enter end date:')
+enter_end_date_label.grid(row=2, column=0, sticky="w", pady=(0, 4))
+
+end_date_entry_cal = Calendar(date_frame, selectmode='day', year=2023, month=1, day=9)
+end_date_entry_cal.grid(row=3, column=0, sticky="ew")
 
 start_date_entry_cal.config(state='disabled')
 end_date_entry_cal.config(state='disabled')
@@ -2028,116 +1975,144 @@ style.configure('PGEFronius.TButton', background='yellow', darkcolor='yellow', l
 
 customtkinter.set_appearance_mode("System")
 
-open_button = customtkinter.CTkButton(root, text='Open PGE report', command=open_file, width=250, height=25)
-open_button.place(x=340, y=40)
+data_actions_frame = ttk.LabelFrame(left_panel, text='Data sources', padding=8)
+data_actions_frame.grid(row=1, column=0, sticky="new")
+data_actions_frame.grid_columnconfigure(0, weight=1)
 
-open_button_Fronius_daily = customtkinter.CTkButton(root, text='Open Fronius report', command=open_file_fronius_daily, width=250, height=25, fg_color="#fdb038")
-open_button_Fronius_daily.place(x=340, y=70)
+open_button = customtkinter.CTkButton(data_actions_frame, text='Open PGE report', command=open_file, width=250, height=25)
+open_button.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
 
-open_button_Fronius_daily_15_minute_button = customtkinter.CTkButton(root, text='Open Fronius 5 minute report', command=open_file_fronius_5, width=250, height=25, fg_color="#fdb038")
-open_button_Fronius_daily_15_minute_button.place(x=340, y=100)
+open_button_Fronius_daily = customtkinter.CTkButton(data_actions_frame, text='Open Fronius report', command=open_file_fronius_daily, width=250, height=25, fg_color="#fdb038")
+open_button_Fronius_daily.grid(row=1, column=0, padx=4, pady=4, sticky="ew")
 
-open_button_custom_daily_report = customtkinter.CTkButton(root, text='Open Custom Report', command=open_file_custom_daily_report, width=250, height=25, fg_color="#f26161")
-open_button_custom_daily_report.place(x=340, y=130)
+open_button_Fronius_daily_15_minute_button = customtkinter.CTkButton(data_actions_frame, text='Open Fronius 5 minute report', command=open_file_fronius_5, width=250, height=25, fg_color="#fdb038")
+open_button_Fronius_daily_15_minute_button.grid(row=2, column=0, padx=4, pady=4, sticky="ew")
 
-analyze_day_button = customtkinter.CTkButton(root, text='Analyze day', command=analyze_day, width=250, height=25, fg_color="grey")
-analyze_day_button.place(x=340, y=160)
+open_button_custom_daily_report = customtkinter.CTkButton(data_actions_frame, text='Open Custom Report', command=open_file_custom_daily_report, width=250, height=25, fg_color="#f26161")
+open_button_custom_daily_report.grid(row=3, column=0, padx=4, pady=4, sticky="ew")
+
+analyze_day_button = customtkinter.CTkButton(data_actions_frame, text='Analyze day', command=analyze_day, width=250, height=25, fg_color="grey")
+analyze_day_button.grid(row=4, column=0, padx=4, pady=4, sticky="ew")
 analyze_day_button.configure(state=tk.DISABLED)
 
 # preview_report_button = ttk.Button(root, text='Preview report', command=preview, width=button_size, style='Custom.TButton')
 # preview_report_button.place(x=340, y=190)
 
 button_size1 = 30
-show_line_graph_button = customtkinter.CTkButton(root, text='Show PGE report line graph', command=show_line_graph, width=210, height=25)
-show_line_graph_button.place(x=640, y=40)
+pge_analysis_frame = ttk.LabelFrame(middle_panel, text='Analysis and pricing', padding=8)
+pge_analysis_frame.grid(row=0, column=0, sticky="nsew")
+pge_analysis_frame.grid_columnconfigure(0, weight=1)
+
+show_line_graph_button = customtkinter.CTkButton(pge_analysis_frame, text='Show PGE report line graph', command=show_line_graph, width=210, height=25)
+show_line_graph_button.grid(row=0, column=0, padx=4, pady=4, sticky="ew")
 show_line_graph_button.configure(state=tk.DISABLED)
 
-show_stacks_button_balanced = customtkinter.CTkButton(root, text='Show stacks net energy', command=show_stacks_balanced, width=210, height=25)
-show_stacks_button_balanced.place(x=640, y=70)
+show_stacks_button_balanced = customtkinter.CTkButton(pge_analysis_frame, text='Show stacks net energy', command=show_stacks_balanced, width=210, height=25)
+show_stacks_button_balanced.grid(row=1, column=0, padx=4, pady=4, sticky="ew")
 show_stacks_button_balanced.configure(state=tk.DISABLED)
 
-show_stacks_button_generated = customtkinter.CTkButton(root, text='Show energy exported to the grid', command=show_stacks_generated, width=210, height=25)
-show_stacks_button_generated.place(x=640, y=100)
+show_stacks_button_generated = customtkinter.CTkButton(pge_analysis_frame, text='Show energy exported to the grid', command=show_stacks_generated, width=210, height=25)
+show_stacks_button_generated.grid(row=2, column=0, padx=4, pady=4, sticky="ew")
 show_stacks_button_generated.configure(state=tk.DISABLED)
 
-show_stacks_button_spent = customtkinter.CTkButton(root, text='Show energy drawn from the grid', command=show_stacks_spent, width=210, height=25)
-show_stacks_button_spent.place(x=640, y=130)
+show_stacks_button_spent = customtkinter.CTkButton(pge_analysis_frame, text='Show energy drawn from the grid', command=show_stacks_spent, width=210, height=25)
+show_stacks_button_spent.grid(row=3, column=0, padx=4, pady=4, sticky="ew")
 show_stacks_button_spent.configure(state=tk.DISABLED)
 
-show_sum_button = customtkinter.CTkButton(root, text='Show PGE report summary', command=show_sum, width=210, height=25)
+show_sum_button = customtkinter.CTkButton(pge_analysis_frame, text='Show PGE report summary', command=show_sum, width=210, height=25)
 show_sum_button.configure(state=tk.DISABLED)
-show_sum_button.place(x=640, y=160)
+show_sum_button.grid(row=4, column=0, padx=4, pady=4, sticky="ew")
 
 
 
 # tk.Label(root, text="Default pricing model is W11 without additional costs").place(x=640, y=180)
-tk.Label(root, text="Price per KwH Spent:").place(x=640, y=190)
-energy_price_spent_entry = customtkinter.CTkEntry(root, width=210, height=10)
-energy_price_spent_entry.place(x=640, y=210)
+tk.Label(pge_analysis_frame, text="Price per KwH Spent:").grid(row=5, column=0, sticky="w", padx=4, pady=(8, 2))
+energy_price_spent_entry = customtkinter.CTkEntry(pge_analysis_frame, width=210, height=10)
+energy_price_spent_entry.grid(row=6, column=0, padx=4, pady=(0, 4), sticky="ew")
 
-tk.Label(root, text="Price per KwH Generated:").place(x=640, y=240)
-energy_price_generated_entry = customtkinter.CTkEntry(root, width=210, height=10)
-energy_price_generated_entry.place(x=640, y=260)
+tk.Label(pge_analysis_frame, text="Price per KwH Generated:").grid(row=7, column=0, sticky="w", padx=4, pady=(8, 2))
+energy_price_generated_entry = customtkinter.CTkEntry(pge_analysis_frame, width=210, height=10)
+energy_price_generated_entry.grid(row=8, column=0, padx=4, pady=(0, 4), sticky="ew")
 
-show_energy_price_button = customtkinter.CTkButton(root, text='Show energy price spent', command=show_energy_price, width=210, height=25)
-show_energy_price_button.place(x=640, y=290)
+show_energy_price_button = customtkinter.CTkButton(pge_analysis_frame, text='Show energy price spent', command=show_energy_price, width=210, height=25)
+show_energy_price_button.grid(row=9, column=0, padx=4, pady=4, sticky="ew")
 show_energy_price_button.configure(state=tk.DISABLED)
 
-configure_energy_price_settings_button = customtkinter.CTkButton(root, text='Add additional price settings ', command=configure_price_settings, width=210, height=25)
-configure_energy_price_settings_button.place(x=640, y=320)
+configure_energy_price_settings_button = customtkinter.CTkButton(pge_analysis_frame, text='Add additional price settings ', command=configure_price_settings, width=210, height=25)
+configure_energy_price_settings_button.grid(row=10, column=0, padx=4, pady=4, sticky="ew")
 configure_energy_price_settings_button.configure(state=tk.DISABLED)
 
-show_fronius_sum_button = customtkinter.CTkButton(root, text='Show Fronius report summary', command=show_fronius_sum, width=210, height=25, fg_color="#fdfa72", text_color="black")
-show_fronius_sum_button.place(x=640, y=350)
+show_fronius_sum_button = customtkinter.CTkButton(pge_analysis_frame, text='Show Fronius report summary', command=show_fronius_sum, width=210, height=25, fg_color="#fdfa72", text_color="black")
+show_fronius_sum_button.grid(row=11, column=0, padx=4, pady=4, sticky="ew")
 show_fronius_sum_button.configure(state=tk.DISABLED)
 
-show_stacks_Fronius_daily_button = customtkinter.CTkButton(root, text='Show energy generated as stacks ', command=show_stacks_Fronius_daily, width=210, height=25, fg_color="#fdfa72", text_color="black")
-show_stacks_Fronius_daily_button.place(x=640, y=380)
+show_stacks_Fronius_daily_button = customtkinter.CTkButton(pge_analysis_frame, text='Show energy generated as stacks ', command=show_stacks_Fronius_daily, width=210, height=25, fg_color="#fdfa72", text_color="black")
+show_stacks_Fronius_daily_button.grid(row=12, column=0, padx=4, pady=4, sticky="ew")
 show_stacks_Fronius_daily_button.configure(state=tk.DISABLED)
 
-show_linechart_Fronius_daily_button = customtkinter.CTkButton(root, text='Show energy generated linechart ', command=show_linechart_Fronius_daily,  width=210, height=25, fg_color="#fdfa72", text_color="black")
-show_linechart_Fronius_daily_button.place(x=640, y=410)
+show_linechart_Fronius_daily_button = customtkinter.CTkButton(pge_analysis_frame, text='Show energy generated linechart ', command=show_linechart_Fronius_daily,  width=210, height=25, fg_color="#fdfa72", text_color="black")
+show_linechart_Fronius_daily_button.grid(row=13, column=0, padx=4, pady=4, sticky="ew")
 show_linechart_Fronius_daily_button.configure(state=tk.DISABLED)
 
-show_differnce_betweenFronius_and_PGE_daily_button = customtkinter.CTkButton(root, text='Show differnce between\n Fronius and PGE data ',
+show_differnce_betweenFronius_and_PGE_daily_button = customtkinter.CTkButton(pge_analysis_frame, text='Show differnce between\n Fronius and PGE data ',
                                                                 command=show_differnce_betweenFronius_and_PGE_daily, width=210, height=25, fg_color="#fdfa72", text_color="black")
-show_differnce_betweenFronius_and_PGE_daily_button.place(x=640, y=440)
+show_differnce_betweenFronius_and_PGE_daily_button.grid(row=14, column=0, padx=4, pady=4, sticky="ew")
 show_differnce_betweenFronius_and_PGE_daily_button.configure(state=tk.DISABLED)
 
 # display_graph_button = ttk.Button(root, text='Display Graph')
 # display_graph_button.place(x=640, y=420)
 
-city_label = ttk.Label(root, text="Enter City: ")
-city_label.place(x=640, y=490)
+weather_controls_frame = ttk.LabelFrame(right_panel, text='Weather and prediction', padding=8)
+weather_controls_frame.grid(row=0, column=0, sticky="new", pady=(0, 10))
+weather_controls_frame.grid_columnconfigure(0, weight=1)
 
-city_entry = customtkinter.CTkEntry(root, width=210, height=10)
+city_label = ttk.Label(weather_controls_frame, text="Enter City: ")
+city_label.grid(row=0, column=0, sticky="w", padx=4, pady=(0, 2))
+
+city_entry = customtkinter.CTkEntry(weather_controls_frame, width=210, height=10)
 city_entry.insert(0, "Lublin")
-city_entry.place(x=640, y=510)
+city_entry.grid(row=1, column=0, padx=4, pady=(0, 6), sticky="ew")
 
-show_weather_history_button = customtkinter.CTkButton(root, text='Show weather history', command=show_weather_history, width=210, height=25, fg_color="light blue",
+show_weather_history_button = customtkinter.CTkButton(weather_controls_frame, text='Show weather history', command=show_weather_history, width=210, height=25, fg_color="light blue",
                                                       text_color="black")
-show_weather_history_button.place(x=890, y=40)
+show_weather_history_button.grid(row=2, column=0, padx=4, pady=4, sticky="ew")
 
-show_weather_forecast_button = customtkinter.CTkButton(root, text='Show 7 day weather forecast', command=show_weather_forecast, width=210, height=25, fg_color="light blue",
+show_weather_forecast_button = customtkinter.CTkButton(weather_controls_frame, text='Show 7 day weather forecast', command=show_weather_forecast, width=210, height=25, fg_color="light blue",
                                                       text_color="black")
-show_weather_forecast_button.place(x=890, y=70)
+show_weather_forecast_button.grid(row=3, column=0, padx=4, pady=4, sticky="ew")
 
-show_current_weather_button = customtkinter.CTkButton(root, text='Show current weather', command=show_current_weather(), width=210, height=25, fg_color="light blue",
+show_current_weather_button = customtkinter.CTkButton(weather_controls_frame, text='Show current weather', command=show_current_weather, width=210, height=25, fg_color="light blue",
                                                       text_color="black")
-# show_current_weather_button.place(x=870, y=100)
+show_current_weather_button.grid(row=4, column=0, padx=4, pady=4, sticky="ew")
 
 # show_hourly_usage_linechart_button = ttk.Button(root, text='Show hourly usage linechart', command=show_hourly_usage_linechart, width=button_size1)
 # show_hourly_usage_linechart_button.place(x=870, y=130)
 
-tk.Label(root, text="Enter plant power: kWh").place(x=890, y=100)
-plant_power_entry = customtkinter.CTkEntry(root, width=210, height=10)
-plant_power_entry.place(x=890, y=120)
+tk.Label(weather_controls_frame, text="Enter plant power: kWh").grid(row=5, column=0, sticky="w", padx=4, pady=(8, 2))
+plant_power_entry = customtkinter.CTkEntry(weather_controls_frame, width=210, height=10)
+plant_power_entry.grid(row=6, column=0, padx=4, pady=(0, 4), sticky="ew")
 plant_power_entry.insert(0, "8")
 
 
-solar_energy_prediction_forecast_button = customtkinter.CTkButton(root, text='Solar energy prediction forecast', command=solar_energy_prediction_forecast,  width=210, height=25, fg_color="light blue",
+solar_energy_prediction_forecast_button = customtkinter.CTkButton(weather_controls_frame, text='Solar energy prediction forecast', command=solar_energy_prediction_forecast,  width=210, height=25, fg_color="light blue",
                                                       text_color="black")
-solar_energy_prediction_forecast_button.place(x=890, y=160)
+solar_energy_prediction_forecast_button.grid(row=7, column=0, padx=4, pady=4, sticky="ew")
+
+weather_display_frame = ttk.LabelFrame(right_panel, text='Current weather', padding=8)
+weather_display_frame.grid(row=1, column=0, sticky="new")
+weather_display_frame.grid_columnconfigure(0, weight=1)
+
+weather_description_label = tk.Label(weather_display_frame, text='No weather data yet')
+weather_description_label.grid(row=0, column=0, pady=(0, 6))
+
+weather_label = tk.Label(weather_display_frame)
+weather_label.grid(row=1, column=0, pady=(0, 6))
+
+temp_label = tk.Label(weather_display_frame, text='--°C')
+temp_label.grid(row=2, column=0)
+
+# Load current weather after UI widgets are ready.
+root.after(150, show_current_weather)
 
 numColKierunek = 2
 numColDataOdczytu = 1
